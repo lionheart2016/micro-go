@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package dashboard;
 
-option go_package = "dashboard-data/internal/grpc/proto";
+option go_package = "/grpc/proto";
 
 // 仪表盘服务
 service DashboardService {
@@ -10,6 +10,38 @@ service DashboardService {
   rpc GetCoreIndicators (GetCoreIndicatorsRequest) returns (GetCoreIndicatorsResponse) {}
   // 获取业绩表现
   rpc GetPerformance (GetPerformanceRequest) returns (GetPerformanceResponse) {}
+  // 获取客户分布
+  rpc GetCustomerDistribution (GetCustomerDistributionRequest) returns (GetCustomerDistributionResponse) {}
+  // 获取客户行为
+  rpc GetCustomerBehavior (GetCustomerBehaviorRequest) returns (GetCustomerBehaviorResponse) {}
+  // 获取股票交易
+  rpc GetStockTrade (GetStockTradeRequest) returns (GetStockTradeResponse) {}
+  // 获取基金交易
+  rpc GetFundTrade (GetFundTradeRequest) returns (GetFundTradeResponse) {}
+  // 获取PI用户基本信息
+  rpc GetPIBasic (GetPIBasicRequest) returns (GetPIBasicResponse) {}
+  // 获取PI用户行为
+  rpc GetPIBehavior (GetPIBehaviorRequest) returns (GetPIBehaviorResponse) {}
+  // 获取开户流程
+  rpc GetAccountProcess (GetAccountProcessRequest) returns (GetAccountProcessResponse) {}
+  // 获取开户异常
+  rpc GetAccountException (GetAccountExceptionRequest) returns (GetAccountExceptionResponse) {}
+  // 获取IPO认购情况
+  rpc GetIPOSubscription (GetIPOSubscriptionRequest) returns (GetIPOSubscriptionResponse) {}
+  // 获取IPO分析
+  rpc GetIPOAnaalysis (GetIPOAnaalysisRequest) returns (GetIPOAnaalysisResponse) {}
+  // 获取客户融资情况
+  rpc GetFinanceCustomer (GetFinanceCustomerRequest) returns (GetFinanceCustomerResponse) {}
+  // 获取热门股票融资情况
+  rpc GetFinanceStock (GetFinanceStockRequest) returns (GetFinanceStockResponse) {}
+  // 获取明细数据
+  rpc GetDrilldownDetail (GetDrilldownDetailRequest) returns (GetDrilldownDetailResponse) {}
+  // 获取历史趋势数据
+  rpc GetDrilldownTrend (GetDrilldownTrendRequest) returns (GetDrilldownTrendResponse) {}
+  // 用户登录
+  rpc Login (LoginRequest) returns (LoginResponse) {}
+  // 获取用户信息
+  rpc GetAuthInfo (GetAuthInfoRequest) returns (GetAuthInfoResponse) {}
 }
 
 // 请求和响应消息
@@ -31,6 +63,156 @@ message GetPerformanceResponse {
   int32 code = 1;
   string message = 2;
   Performance data = 3;
+}
+
+message GetCustomerDistributionRequest {
+  string dimension = 1; // 维度（age/region/job/education/type）
+}
+
+message GetCustomerDistributionResponse {
+  int32 code = 1;
+  string message = 2;
+  CustomerDistribution data = 3;
+}
+
+message GetCustomerBehaviorRequest {
+  string type = 1; // 指标类型（retention/churn/clv/activity）
+}
+
+message GetCustomerBehaviorResponse {
+  int32 code = 1;
+  string message = 2;
+  CustomerBehavior data = 3;
+}
+
+message GetStockTradeRequest {
+  string type = 1; // 详情类型（execution/成交率/时段分布/热门股票/投资分布）
+}
+
+message GetStockTradeResponse {
+  int32 code = 1;
+  string message = 2;
+  StockTrade data = 3;
+}
+
+message GetFundTradeRequest {
+  string type = 1; // 详情类型（销售情况/趋势/投资组合/热门基金）
+}
+
+message GetFundTradeResponse {
+  int32 code = 1;
+  string message = 2;
+  FundTrade data = 3;
+}
+
+message GetPIBasicRequest {}
+
+message GetPIBasicResponse {
+  int32 code = 1;
+  string message = 2;
+  PIBasic data = 3;
+}
+
+message GetPIBehaviorRequest {
+  string type = 1; // 行为类型（stock/fund）
+}
+
+message GetPIBehaviorResponse {
+  int32 code = 1;
+  string message = 2;
+  PIBehavior data = 3;
+}
+
+message GetAccountProcessRequest {}
+
+message GetAccountProcessResponse {
+  int32 code = 1;
+  string message = 2;
+  AccountProcess data = 3;
+}
+
+message GetAccountExceptionRequest {}
+
+message GetAccountExceptionResponse {
+  int32 code = 1;
+  string message = 2;
+  AccountException data = 3;
+}
+
+message GetIPOSubscriptionRequest {}
+
+message GetIPOSubscriptionResponse {
+  int32 code = 1;
+  string message = 2;
+  IPOSubscription data = 3;
+}
+
+message GetIPOAnaalysisRequest {}
+
+message GetIPOAnaalysisResponse {
+  int32 code = 1;
+  string message = 2;
+  IPOAnalysis data = 3;
+}
+
+message GetFinanceCustomerRequest {}
+
+message GetFinanceCustomerResponse {
+  int32 code = 1;
+  string message = 2;
+  FinanceCustomer data = 3;
+}
+
+message GetFinanceStockRequest {}
+
+message GetFinanceStockResponse {
+  int32 code = 1;
+  string message = 2;
+  FinanceStock data = 3;
+}
+
+message GetDrilldownDetailRequest {
+  string type = 1; // 数据类型（customer/trade/ipo/finance）
+  string id = 2; // 数据ID
+  int32 page = 3; // 页码
+  int32 pageSize = 4; // 每页条数
+}
+
+message GetDrilldownDetailResponse {
+  int32 code = 1;
+  string message = 2;
+  DrilldownDetail data = 3;
+}
+
+message GetDrilldownTrendRequest {
+  string type = 1; // 数据类型（indicator/revenue/customer/trade）
+  string id = 2; // 数据ID
+  string period = 3; // 时间范围（1m/3m/6m/1y）
+}
+
+message GetDrilldownTrendResponse {
+  int32 code = 1;
+  string message = 2;
+  DrilldownTrend data = 3;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  int32 code = 1;
+  string message = 2;
+  LoginData data = 3;
+}
+
+message GetAuthInfoRequest {}
+
+message GetAuthInfoResponse {
+  int32 code = 1;
+  string message = 2;
+  User data = 3;
 }
 
 // 数据结构
@@ -82,4 +264,277 @@ message RevenueChange {
 message DepositTrend {
   string month = 1;
   int32 value = 2;
+}
+
+message CustomerDistribution {
+  string dimension = 1;
+  repeated CustomerDistributionItem distribution = 2;
+}
+
+message CustomerDistributionItem {
+  string name = 1;
+  int32 value = 2;
+  int32 total_asset = 3;
+  int32 avg_asset = 4;
+  int32 avg_trade_amount = 5;
+}
+
+message CustomerBehavior {
+  string type = 1;
+  repeated CustomerBehaviorTrend trend = 2;
+  double industry_average = 3;
+  double competitor_average = 4;
+}
+
+message CustomerBehaviorTrend {
+  string quarter = 1;
+  double retention_rate = 2;
+  double churn_rate = 3;
+}
+
+message StockTrade {
+  string type = 1;
+  repeated ExecutionTime execution_time = 2;
+  repeated MarketComparison market_comparison = 3;
+}
+
+message ExecutionTime {
+  string time = 1;
+  double avg_time = 2;
+}
+
+message MarketComparison {
+  string market = 1;
+  double avg_time = 2;
+}
+
+message FundTrade {
+  string type = 1;
+  repeated SalesByType sales_by_type = 2;
+}
+
+message SalesByType {
+  string type = 1;
+  int32 amount = 2;
+  int32 count = 3;
+}
+
+message PIBasic {
+  int32 total_users = 1;
+  int32 change = 2;
+  double change_rate = 3;
+  repeated AssetDistribution asset_distribution = 4;
+  int32 total_asset = 5;
+  repeated Demographic demographics = 6;
+}
+
+message AssetDistribution {
+  string name = 1;
+  double value = 2;
+}
+
+message Demographic {
+  string job = 1;
+  double percentage = 2;
+  int32 avg_asset = 3;
+  int32 avg_trade_frequency = 4;
+  int32 avg_fund_count = 5;
+}
+
+message PIBehavior {
+  string type = 1;
+  int32 avg_trade_amount = 2;
+  int32 avg_trade_frequency = 3;
+  int32 avg_holding_period = 4;
+  repeated MoneyFlow money_flow = 5;
+}
+
+message MoneyFlow {
+  string from = 1;
+  string to = 2;
+  int32 value = 3;
+}
+
+message AccountProcess {
+  repeated FunnelStage funnel = 1;
+  repeated StageTime stage_time = 2;
+}
+
+message FunnelStage {
+  string stage = 1;
+  int32 count = 2;
+  double conversion = 3;
+}
+
+message StageTime {
+  string stage = 1;
+  double avg_time = 2;
+  double median_time = 3;
+  double p25_time = 4;
+  double p75_time = 5;
+  double max_time = 6;
+}
+
+message AccountException {
+  repeated ExceptionType exception_types = 1;
+  repeated ExceptionStage exception_stages = 2;
+  repeated ExceptionHandling exception_handling = 3;
+}
+
+message ExceptionType {
+  string type = 1;
+  int32 count = 2;
+  double percentage = 3;
+}
+
+message ExceptionStage {
+  string stage = 1;
+  int32 count = 2;
+}
+
+message ExceptionHandling {
+  string type = 1;
+  double avg_handle_time = 2;
+  double max_handle_time = 3;
+  double success_rate = 4;
+}
+
+message IPOSubscription {
+  int32 total_users = 1;
+  repeated UserDistribution user_distribution = 2;
+  repeated SubscriptionAmount subscription_amount = 3;
+  repeated SubscriptionMultiple subscription_multiples = 4;
+}
+
+message UserDistribution {
+  string type = 1;
+  int32 count = 2;
+  double percentage = 3;
+}
+
+message SubscriptionAmount {
+  string project = 1;
+  int32 pi_amount = 2;
+  int32 regular_amount = 3;
+  int32 total_amount = 4;
+}
+
+message SubscriptionMultiple {
+  string project = 1;
+  double multiple = 2;
+}
+
+message IPOAnalysis {
+  repeated ProjectPerformance project_performance = 1;
+  repeated InfluenceFactor influence_factors = 2;
+  repeated CompetitorComparison competitor_comparison = 3;
+}
+
+message ProjectPerformance {
+  string project = 1;
+  double price_change = 2;
+  double avg_return = 3;
+}
+
+message InfluenceFactor {
+  string factor = 1;
+  double correlation = 2;
+}
+
+message CompetitorComparison {
+  string competitor = 1;
+  int32 subscription_users = 2;
+  int32 subscription_amount = 3;
+  double multiple = 4;
+}
+
+message FinanceCustomer {
+  int32 total_users = 1;
+  repeated UserDistribution user_distribution = 2;
+  FinancingSize financing_size = 3;
+  repeated FinancingPurpose financing_purpose = 4;
+  repeated RiskAssessment risk_assessment = 5;
+}
+
+message FinancingSize {
+  double avg_size = 1;
+  double median_size = 2;
+  double p25_size = 3;
+  double p75_size = 4;
+  double max_size = 5;
+}
+
+message FinancingPurpose {
+  string purpose = 1;
+  double percentage = 2;
+}
+
+message RiskAssessment {
+  string type = 1;
+  double default_rate = 2;
+  double overdue_rate = 3;
+}
+
+message FinanceStock {
+  repeated HotStock hot_stocks = 1;
+  repeated FinancingTrend financing_trend = 2;
+  repeated MarginRatio margin_ratio = 3;
+}
+
+message HotStock {
+  string stock = 1;
+  int32 financing_balance = 2;
+  double market_cap_ratio = 3;
+}
+
+message FinancingTrend {
+  string date = 1;
+  int32 buy_amount = 2;
+  int32 sell_amount = 3;
+}
+
+message MarginRatio {
+  string stock = 1;
+  double ratio = 2;
+  double price_volatility = 3;
+}
+
+message DrilldownDetail {
+  int32 total = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  repeated DrilldownItem list = 4;
+}
+
+message DrilldownItem {
+  string id = 1;
+  string customer_id = 2;
+  string name = 3;
+  int32 age = 4;
+  string region = 5;
+  int32 asset = 6;
+  int32 trade_amount = 7;
+}
+
+message DrilldownTrend {
+  string type = 1;
+  string name = 2;
+  repeated TrendItem trend = 3;
+}
+
+message TrendItem {
+  string date = 1;
+  int32 value = 2;
+}
+
+message LoginData {
+  string token = 1;
+  User user = 2;
+}
+
+message User {
+  string id = 1;
+  string username = 2;
+  string role = 3;
+  repeated string permissions = 4;
 }
