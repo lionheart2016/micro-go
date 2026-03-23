@@ -5,6 +5,9 @@ import (
 	"dashboard-rest/model"
 	"dashboard-rest/pkg/logger"
 	"fmt"
+
+	"dashboard-rest/grpc/proto"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -12,6 +15,7 @@ import (
 type DashboardClient struct {
 	logger  *logger.Logger
 	conn    *grpc.ClientConn
+	service proto.DashboardServiceClient
 }
 
 func New(grpcHost string, grpcPort int, logger *logger.Logger) (*DashboardClient, error) {
@@ -23,64 +27,80 @@ func New(grpcHost string, grpcPort int, logger *logger.Logger) (*DashboardClient
 		return nil, err
 	}
 
+	// 创建服务客户端
+	service := proto.NewDashboardServiceClient(conn)
+
 	return &DashboardClient{
 		logger:  logger,
 		conn:    conn,
+		service: service,
 	}, nil
 }
 
 func (c *DashboardClient) GetCoreIndicators(ctx context.Context, period string) (*model.Response, error) {
 	c.logger.Info("Getting core indicators")
 
-	// 模拟数据
+	// 构建请求
+	req := &proto.GetCoreIndicatorsRequest{
+		Period: period,
+	}
+
+	// 调用gRPC接口
+	resp, err := c.service.GetCoreIndicators(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get core indicators: %v", err)
+		return nil, err
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.CoreIndicators{
 			RegisteredUsers: model.Indicator{
-				Value:      10000,
-				Change:     500,
-				ChangeRate: 5.26,
+				Value:      int(resp.Data.RegisteredUsers.Value),
+				Change:     int(resp.Data.RegisteredUsers.Change),
+				ChangeRate: resp.Data.RegisteredUsers.ChangeRate,
 			},
 			AccountCount: model.Indicator{
-				Value:      8000,
-				Change:     300,
-				ChangeRate: 3.95,
+				Value:      int(resp.Data.AccountCount.Value),
+				Change:     int(resp.Data.AccountCount.Change),
+				ChangeRate: resp.Data.AccountCount.ChangeRate,
 			},
 			ActiveUsers: model.Indicator{
-				Value:      3000,
-				Change:     -200,
-				ChangeRate: -6.25,
+				Value:      int(resp.Data.ActiveUsers.Value),
+				Change:     int(resp.Data.ActiveUsers.Change),
+				ChangeRate: resp.Data.ActiveUsers.ChangeRate,
 			},
 			DepositUsers: model.Indicator{
-				Value:      2000,
-				Change:     150,
-				ChangeRate: 8.11,
+				Value:      int(resp.Data.DepositUsers.Value),
+				Change:     int(resp.Data.DepositUsers.Change),
+				ChangeRate: resp.Data.DepositUsers.ChangeRate,
 			},
 			DepositAmount: model.Indicator{
-				Value:      50000000,
-				Change:     5000000,
-				ChangeRate: 11.11,
+				Value:      int(resp.Data.DepositAmount.Value),
+				Change:     int(resp.Data.DepositAmount.Change),
+				ChangeRate: resp.Data.DepositAmount.ChangeRate,
 			},
 			StockTradeUsers: model.Indicator{
-				Value:      1500,
-				Change:     100,
-				ChangeRate: 7.14,
+				Value:      int(resp.Data.StockTradeUsers.Value),
+				Change:     int(resp.Data.StockTradeUsers.Change),
+				ChangeRate: resp.Data.StockTradeUsers.ChangeRate,
 			},
 			StockTradeAmount: model.Indicator{
-				Value:      30000000,
-				Change:     2000000,
-				ChangeRate: 7.14,
+				Value:      int(resp.Data.StockTradeAmount.Value),
+				Change:     int(resp.Data.StockTradeAmount.Change),
+				ChangeRate: resp.Data.StockTradeAmount.ChangeRate,
 			},
 			FundTradeUsers: model.Indicator{
-				Value:      800,
-				Change:     50,
-				ChangeRate: 6.67,
+				Value:      int(resp.Data.FundTradeUsers.Value),
+				Change:     int(resp.Data.FundTradeUsers.Change),
+				ChangeRate: resp.Data.FundTradeUsers.ChangeRate,
 			},
 			FundTradeAmount: model.Indicator{
-				Value:      10000000,
-				Change:     500000,
-				ChangeRate: 5.26,
+				Value:      int(resp.Data.FundTradeAmount.Value),
+				Change:     int(resp.Data.FundTradeAmount.Change),
+				ChangeRate: resp.Data.FundTradeAmount.ChangeRate,
 			},
 		},
 	}, nil
@@ -89,41 +109,62 @@ func (c *DashboardClient) GetCoreIndicators(ctx context.Context, period string) 
 func (c *DashboardClient) GetPerformance(ctx context.Context, period string) (*model.Response, error) {
 	c.logger.Info("Getting performance")
 
-	// 模拟数据
-	revenueStructure := []model.RevenueItem{
-		{Name: "佣金", Value: 1200000},
-		{Name: "平台费", Value: 400000},
-		{Name: "利息", Value: 300000},
-		{Name: "IPO手续费", Value: 100000},
+	// 构建请求
+	req := &proto.GetPerformanceRequest{
+		Period: period,
 	}
 
-	revenueTrend := []model.RevenueTrend{
-		{Month: "2023-01", Stock: 1800000, Fund: 450000},
-		{Month: "2023-02", Stock: 1900000, Fund: 480000},
-		{Month: "2023-03", Stock: 2000000, Fund: 500000},
+	// 调用gRPC接口
+	resp, err := c.service.GetPerformance(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get performance: %v", err)
+		return nil, err
 	}
 
-	depositTrend := []model.DepositTrend{
-		{Month: "2023-01", Value: 4000000},
-		{Month: "2023-02", Value: 4500000},
-		{Month: "2023-03", Value: 5000000},
+	// 转换revenueStructure
+	revenueStructure := make([]model.RevenueItem, len(resp.Data.RevenueStructure))
+	for i, item := range resp.Data.RevenueStructure {
+		revenueStructure[i] = model.RevenueItem{
+			Name:  item.Name,
+			Value: int(item.Value),
+		}
 	}
 
+	// 转换revenueTrend
+	revenueTrend := make([]model.RevenueTrend, len(resp.Data.RevenueTrend))
+	for i, item := range resp.Data.RevenueTrend {
+		revenueTrend[i] = model.RevenueTrend{
+			Month: item.Month,
+			Stock: int(item.Stock),
+			Fund:  int(item.Fund),
+		}
+	}
+
+	// 转换depositTrend
+	depositTrend := make([]model.DepositTrend, len(resp.Data.DepositTrend))
+	for i, item := range resp.Data.DepositTrend {
+		depositTrend[i] = model.DepositTrend{
+			Month: item.Month,
+			Value: int(item.Value),
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.Performance{
-			StockRevenue: 2000000,
-			FundRevenue:  500000,
+			StockRevenue:     int(resp.Data.StockRevenue),
+			FundRevenue:      int(resp.Data.FundRevenue),
 			RevenueStructure: revenueStructure,
 			RevenueTrend:     revenueTrend,
 			RevenueChange: model.RevenueChange{
-				Yoy: 15.38,
-				Mom: 5.26,
+				Yoy: resp.Data.RevenueChange.Yoy,
+				Mom: resp.Data.RevenueChange.Mom,
 			},
-			DepositNetGrowth:       5000000,
+			DepositNetGrowth:       int(resp.Data.DepositNetGrowth),
 			DepositTrend:           depositTrend,
-			DepositWithdrawalRatio: 1.5,
+			DepositWithdrawalRatio: resp.Data.DepositWithdrawalRatio,
 		},
 	}, nil
 }
@@ -132,20 +173,36 @@ func (c *DashboardClient) GetPerformance(ctx context.Context, period string) (*m
 func (c *DashboardClient) GetCustomerDistribution(ctx context.Context, dimension string) (*model.Response, error) {
 	c.logger.Info("Getting customer distribution")
 
-	// 模拟数据
-	distribution := []model.CustomerDistributionItem{
-		{Name: "18-25岁", Value: 1000, TotalAsset: 5000000, AvgAsset: 5000, AvgTradeAmount: 2000},
-		{Name: "26-35岁", Value: 3000, TotalAsset: 30000000, AvgAsset: 10000, AvgTradeAmount: 5000},
-		{Name: "36-45岁", Value: 2500, TotalAsset: 37500000, AvgAsset: 15000, AvgTradeAmount: 8000},
-		{Name: "46-55岁", Value: 1000, TotalAsset: 20000000, AvgAsset: 20000, AvgTradeAmount: 10000},
-		{Name: "55岁以上", Value: 500, TotalAsset: 15000000, AvgAsset: 30000, AvgTradeAmount: 15000},
+	// 构建请求
+	req := &proto.GetCustomerDistributionRequest{
+		Dimension: dimension,
 	}
 
+	// 调用gRPC接口
+	resp, err := c.service.GetCustomerDistribution(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get customer distribution: %v", err)
+		return nil, err
+	}
+
+	// 转换distribution
+	distribution := make([]model.CustomerDistributionItem, len(resp.Data.Distribution))
+	for i, item := range resp.Data.Distribution {
+		distribution[i] = model.CustomerDistributionItem{
+			Name:           item.Name,
+			Value:          int(item.Value),
+			TotalAsset:     int(item.TotalAsset),
+			AvgAsset:       int(item.AvgAsset),
+			AvgTradeAmount: int(item.AvgTradeAmount),
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.CustomerDistribution{
-			Dimension:   dimension,
+			Dimension:    resp.Data.Dimension,
 			Distribution: distribution,
 		},
 	}, nil
@@ -154,23 +211,37 @@ func (c *DashboardClient) GetCustomerDistribution(ctx context.Context, dimension
 func (c *DashboardClient) GetCustomerBehavior(ctx context.Context, behaviorType string) (*model.Response, error) {
 	c.logger.Info("Getting customer behavior")
 
-	// 模拟数据
-	trend := []model.CustomerBehaviorTrend{
-		{Quarter: "2022-Q1", RetentionRate: 85, ChurnRate: 15},
-		{Quarter: "2022-Q2", RetentionRate: 82, ChurnRate: 18},
-		{Quarter: "2022-Q3", RetentionRate: 80, ChurnRate: 20},
-		{Quarter: "2022-Q4", RetentionRate: 78, ChurnRate: 22},
-		{Quarter: "2023-Q1", RetentionRate: 80, ChurnRate: 20},
+	// 构建请求
+	req := &proto.GetCustomerBehaviorRequest{
+		Type: behaviorType,
 	}
 
+	// 调用gRPC接口
+	resp, err := c.service.GetCustomerBehavior(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get customer behavior: %v", err)
+		return nil, err
+	}
+
+	// 转换trend
+	trend := make([]model.CustomerBehaviorTrend, len(resp.Data.Trend))
+	for i, item := range resp.Data.Trend {
+		trend[i] = model.CustomerBehaviorTrend{
+			Quarter:       item.Quarter,
+			RetentionRate: item.RetentionRate,
+			ChurnRate:     item.ChurnRate,
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.CustomerBehavior{
-			Type:             behaviorType,
-			Trend:            trend,
-			IndustryAverage:  75,
-			CompetitorAverage: 78,
+			Type:              resp.Data.Type,
+			Trend:             trend,
+			IndustryAverage:   resp.Data.IndustryAverage,
+			CompetitorAverage: resp.Data.CompetitorAverage,
 		},
 	}, nil
 }
@@ -179,26 +250,44 @@ func (c *DashboardClient) GetCustomerBehavior(ctx context.Context, behaviorType 
 func (c *DashboardClient) GetStockTrade(ctx context.Context, tradeType string) (*model.Response, error) {
 	c.logger.Info("Getting stock trade")
 
-	// 模拟数据
-	executionTime := []model.ExecutionTime{
-		{Time: "9:30-10:30", AvgTime: 0.5},
-		{Time: "10:30-11:30", AvgTime: 0.3},
-		{Time: "13:30-14:30", AvgTime: 0.4},
-		{Time: "14:30-15:30", AvgTime: 0.6},
+	// 构建请求
+	req := &proto.GetStockTradeRequest{
+		Type: tradeType,
 	}
 
-	marketComparison := []model.MarketComparison{
-		{Market: "港股", AvgTime: 0.4},
-		{Market: "美股", AvgTime: 0.5},
+	// 调用gRPC接口
+	resp, err := c.service.GetStockTrade(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get stock trade: %v", err)
+		return nil, err
 	}
 
+	// 转换executionTime
+	executionTime := make([]model.ExecutionTime, len(resp.Data.ExecutionTime))
+	for i, item := range resp.Data.ExecutionTime {
+		executionTime[i] = model.ExecutionTime{
+			Time:    item.Time,
+			AvgTime: item.AvgTime,
+		}
+	}
+
+	// 转换marketComparison
+	marketComparison := make([]model.MarketComparison, len(resp.Data.MarketComparison))
+	for i, item := range resp.Data.MarketComparison {
+		marketComparison[i] = model.MarketComparison{
+			Market:  item.Market,
+			AvgTime: item.AvgTime,
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.StockTrade{
-			Type:              tradeType,
-			ExecutionTime:     executionTime,
-			MarketComparison:  marketComparison,
+			Type:             resp.Data.Type,
+			ExecutionTime:    executionTime,
+			MarketComparison: marketComparison,
 		},
 	}, nil
 }
@@ -206,19 +295,34 @@ func (c *DashboardClient) GetStockTrade(ctx context.Context, tradeType string) (
 func (c *DashboardClient) GetFundTrade(ctx context.Context, tradeType string) (*model.Response, error) {
 	c.logger.Info("Getting fund trade")
 
-	// 模拟数据
-	salesByType := []model.SalesByType{
-		{Type: "股票型", Amount: 5000000, Count: 200},
-		{Type: "债券型", Amount: 3000000, Count: 150},
-		{Type: "混合型", Amount: 1500000, Count: 100},
-		{Type: "货币型", Amount: 500000, Count: 50},
+	// 构建请求
+	req := &proto.GetFundTradeRequest{
+		Type: tradeType,
 	}
 
+	// 调用gRPC接口
+	resp, err := c.service.GetFundTrade(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get fund trade: %v", err)
+		return nil, err
+	}
+
+	// 转换salesByType
+	salesByType := make([]model.SalesByType, len(resp.Data.SalesByType))
+	for i, item := range resp.Data.SalesByType {
+		salesByType[i] = model.SalesByType{
+			Type:   item.Type,
+			Amount: int(item.Amount),
+			Count:  int(item.Count),
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.FundTrade{
-			Type:       tradeType,
+			Type:        resp.Data.Type,
 			SalesByType: salesByType,
 		},
 	}, nil
@@ -228,29 +332,48 @@ func (c *DashboardClient) GetFundTrade(ctx context.Context, tradeType string) (*
 func (c *DashboardClient) GetPIBasic(ctx context.Context) (*model.Response, error) {
 	c.logger.Info("Getting PI basic information")
 
-	// 模拟数据
-	assetDistribution := []model.AssetDistribution{
-		{Name: "港股", Value: 60},
-		{Name: "美股", Value: 30},
-		{Name: "基金", Value: 10},
+	// 构建请求
+	req := &proto.GetPIBasicRequest{}
+
+	// 调用gRPC接口
+	resp, err := c.service.GetPIBasic(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get PI basic: %v", err)
+		return nil, err
 	}
 
-	demographics := []model.Demographic{
-		{Job: "金融行业", Percentage: 40, AvgAsset: 150000, AvgTradeFrequency: 10, AvgFundCount: 5},
-		{Job: "科技行业", Percentage: 30, AvgAsset: 120000, AvgTradeFrequency: 8, AvgFundCount: 4},
-		{Job: "其他行业", Percentage: 30, AvgAsset: 80000, AvgTradeFrequency: 5, AvgFundCount: 3},
+	// 转换assetDistribution
+	assetDistribution := make([]model.AssetDistribution, len(resp.Data.AssetDistribution))
+	for i, item := range resp.Data.AssetDistribution {
+		assetDistribution[i] = model.AssetDistribution{
+			Name:  item.Name,
+			Value: item.Value,
+		}
 	}
 
+	// 转换demographics
+	demographics := make([]model.Demographic, len(resp.Data.Demographics))
+	for i, item := range resp.Data.Demographics {
+		demographics[i] = model.Demographic{
+			Job:               item.Job,
+			Percentage:        item.Percentage,
+			AvgAsset:          int(item.AvgAsset),
+			AvgTradeFrequency: int(item.AvgTradeFrequency),
+			AvgFundCount:      int(item.AvgFundCount),
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.PIBasic{
-			TotalUsers:       500,
-			Change:           50,
-			ChangeRate:       11.11,
+			TotalUsers:        int(resp.Data.TotalUsers),
+			Change:            int(resp.Data.Change),
+			ChangeRate:        resp.Data.ChangeRate,
 			AssetDistribution: assetDistribution,
-			TotalAsset:       50000000,
-			Demographics:     demographics,
+			TotalAsset:        int(resp.Data.TotalAsset),
+			Demographics:      demographics,
 		},
 	}, nil
 }
@@ -258,20 +381,37 @@ func (c *DashboardClient) GetPIBasic(ctx context.Context) (*model.Response, erro
 func (c *DashboardClient) GetPIBehavior(ctx context.Context, behaviorType string) (*model.Response, error) {
 	c.logger.Info("Getting PI behavior")
 
-	// 模拟数据
-	moneyFlow := []model.MoneyFlow{
-		{From: "科技行业", To: "金融行业", Value: 5000000},
-		{From: "金融行业", To: "消费行业", Value: 3000000},
+	// 构建请求
+	req := &proto.GetPIBehaviorRequest{
+		Type: behaviorType,
 	}
 
+	// 调用gRPC接口
+	resp, err := c.service.GetPIBehavior(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get PI behavior: %v", err)
+		return nil, err
+	}
+
+	// 转换moneyFlow
+	moneyFlow := make([]model.MoneyFlow, len(resp.Data.MoneyFlow))
+	for i, item := range resp.Data.MoneyFlow {
+		moneyFlow[i] = model.MoneyFlow{
+			From:  item.From,
+			To:    item.To,
+			Value: int(item.Value),
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.PIBehavior{
-			Type:              behaviorType,
-			AvgTradeAmount:    20000,
-			AvgTradeFrequency: 10,
-			AvgHoldingPeriod:  30,
+			Type:              resp.Data.Type,
+			AvgTradeAmount:    int(resp.Data.AvgTradeAmount),
+			AvgTradeFrequency: int(resp.Data.AvgTradeFrequency),
+			AvgHoldingPeriod:  int(resp.Data.AvgHoldingPeriod),
 			MoneyFlow:         moneyFlow,
 		},
 	}, nil
@@ -281,26 +421,46 @@ func (c *DashboardClient) GetPIBehavior(ctx context.Context, behaviorType string
 func (c *DashboardClient) GetAccountProcess(ctx context.Context) (*model.Response, error) {
 	c.logger.Info("Getting account process")
 
-	// 模拟数据
-	funnel := []model.FunnelStage{
-		{Stage: "注册", Count: 1000, Conversion: 100},
-		{Stage: "身份验证", Count: 800, Conversion: 80},
-		{Stage: "风险评估", Count: 700, Conversion: 87.5},
-		{Stage: "签署协议", Count: 600, Conversion: 85.7},
-		{Stage: "开户成功", Count: 500, Conversion: 83.3},
+	// 构建请求
+	req := &proto.GetAccountProcessRequest{}
+
+	// 调用gRPC接口
+	resp, err := c.service.GetAccountProcess(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get account process: %v", err)
+		return nil, err
 	}
 
-	stageTime := []model.StageTime{
-		{Stage: "注册", AvgTime: 2, MedianTime: 1.5, P25Time: 1, P75Time: 2.5, MaxTime: 5},
-		{Stage: "身份验证", AvgTime: 5, MedianTime: 4, P25Time: 3, P75Time: 6, MaxTime: 10},
+	// 转换funnel
+	funnel := make([]model.FunnelStage, len(resp.Data.Funnel))
+	for i, item := range resp.Data.Funnel {
+		funnel[i] = model.FunnelStage{
+			Stage:      item.Stage,
+			Count:      int(item.Count),
+			Conversion: item.Conversion,
+		}
 	}
 
+	// 转换stageTime
+	stageTime := make([]model.StageTime, len(resp.Data.StageTime))
+	for i, item := range resp.Data.StageTime {
+		stageTime[i] = model.StageTime{
+			Stage:      item.Stage,
+			AvgTime:    item.AvgTime,
+			MedianTime: item.MedianTime,
+			P25Time:    item.P25Time,
+			P75Time:    item.P75Time,
+			MaxTime:    item.MaxTime,
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.AccountProcess{
-			Funnel:     funnel,
-			StageTime:  stageTime,
+			Funnel:    funnel,
+			StageTime: stageTime,
 		},
 	}, nil
 }
@@ -308,32 +468,54 @@ func (c *DashboardClient) GetAccountProcess(ctx context.Context) (*model.Respons
 func (c *DashboardClient) GetAccountException(ctx context.Context) (*model.Response, error) {
 	c.logger.Info("Getting account exception")
 
-	// 模拟数据
-	exceptionTypes := []model.ExceptionType{
-		{Type: "身份验证失败", Count: 50, Percentage: 41.7},
-		{Type: "资料不完整", Count: 30, Percentage: 25},
-		{Type: "风险评估不通过", Count: 20, Percentage: 16.7},
-		{Type: "其他", Count: 20, Percentage: 16.7},
+	// 构建请求
+	req := &proto.GetAccountExceptionRequest{}
+
+	// 调用gRPC接口
+	resp, err := c.service.GetAccountException(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get account exception: %v", err)
+		return nil, err
 	}
 
-	exceptionStages := []model.ExceptionStage{
-		{Stage: "身份验证", Count: 50},
-		{Stage: "风险评估", Count: 30},
-		{Stage: "签署协议", Count: 10},
+	// 转换exceptionTypes
+	exceptionTypes := make([]model.ExceptionType, len(resp.Data.ExceptionTypes))
+	for i, item := range resp.Data.ExceptionTypes {
+		exceptionTypes[i] = model.ExceptionType{
+			Type:       item.Type,
+			Count:      int(item.Count),
+			Percentage: item.Percentage,
+		}
 	}
 
-	exceptionHandling := []model.ExceptionHandling{
-		{Type: "身份验证失败", AvgHandleTime: 24, MaxHandleTime: 72, SuccessRate: 80},
-		{Type: "资料不完整", AvgHandleTime: 12, MaxHandleTime: 48, SuccessRate: 90},
+	// 转换exceptionStages
+	exceptionStages := make([]model.ExceptionStage, len(resp.Data.ExceptionStages))
+	for i, item := range resp.Data.ExceptionStages {
+		exceptionStages[i] = model.ExceptionStage{
+			Stage: item.Stage,
+			Count: int(item.Count),
+		}
 	}
 
+	// 转换exceptionHandling
+	exceptionHandling := make([]model.ExceptionHandling, len(resp.Data.ExceptionHandling))
+	for i, item := range resp.Data.ExceptionHandling {
+		exceptionHandling[i] = model.ExceptionHandling{
+			Type:          item.Type,
+			AvgHandleTime: item.AvgHandleTime,
+			MaxHandleTime: item.MaxHandleTime,
+			SuccessRate:   item.SuccessRate,
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.AccountException{
-			ExceptionTypes:     exceptionTypes,
-			ExceptionStages:    exceptionStages,
-			ExceptionHandling:  exceptionHandling,
+			ExceptionTypes:    exceptionTypes,
+			ExceptionStages:   exceptionStages,
+			ExceptionHandling: exceptionHandling,
 		},
 	}, nil
 }
@@ -342,30 +524,54 @@ func (c *DashboardClient) GetAccountException(ctx context.Context) (*model.Respo
 func (c *DashboardClient) GetIPOSubscription(ctx context.Context) (*model.Response, error) {
 	c.logger.Info("Getting IPO subscription")
 
-	// 模拟数据
-	userDistribution := []model.UserDistribution{
-		{Type: "PI用户", Count: 400, Percentage: 40},
-		{Type: "普通用户", Count: 600, Percentage: 60},
+	// 构建请求
+	req := &proto.GetIPOSubscriptionRequest{}
+
+	// 调用gRPC接口
+	resp, err := c.service.GetIPOSubscription(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get IPO subscription: %v", err)
+		return nil, err
 	}
 
-	subscriptionAmount := []model.SubscriptionAmount{
-		{Project: "项目A", PiAmount: 5000000, RegularAmount: 3000000, TotalAmount: 8000000},
-		{Project: "项目B", PiAmount: 3000000, RegularAmount: 2000000, TotalAmount: 5000000},
+	// 转换userDistribution
+	userDistribution := make([]model.UserDistribution, len(resp.Data.UserDistribution))
+	for i, item := range resp.Data.UserDistribution {
+		userDistribution[i] = model.UserDistribution{
+			Type:       item.Type,
+			Count:      int(item.Count),
+			Percentage: item.Percentage,
+		}
 	}
 
-	subscriptionMultiples := []model.SubscriptionMultiple{
-		{Project: "项目A", Multiple: 10},
-		{Project: "项目B", Multiple: 8},
-		{Project: "项目C", Multiple: 12},
+	// 转换subscriptionAmount
+	subscriptionAmount := make([]model.SubscriptionAmount, len(resp.Data.SubscriptionAmount))
+	for i, item := range resp.Data.SubscriptionAmount {
+		subscriptionAmount[i] = model.SubscriptionAmount{
+			Project:       item.Project,
+			PiAmount:      int(item.PiAmount),
+			RegularAmount: int(item.RegularAmount),
+			TotalAmount:   int(item.TotalAmount),
+		}
 	}
 
+	// 转换subscriptionMultiples
+	subscriptionMultiples := make([]model.SubscriptionMultiple, len(resp.Data.SubscriptionMultiples))
+	for i, item := range resp.Data.SubscriptionMultiples {
+		subscriptionMultiples[i] = model.SubscriptionMultiple{
+			Project:  item.Project,
+			Multiple: item.Multiple,
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.IPOSubscription{
-			TotalUsers:         1000,
-			UserDistribution:   userDistribution,
-			SubscriptionAmount: subscriptionAmount,
+			TotalUsers:            int(resp.Data.TotalUsers),
+			UserDistribution:      userDistribution,
+			SubscriptionAmount:    subscriptionAmount,
 			SubscriptionMultiples: subscriptionMultiples,
 		},
 	}, nil
@@ -374,31 +580,54 @@ func (c *DashboardClient) GetIPOSubscription(ctx context.Context) (*model.Respon
 func (c *DashboardClient) GetIPOAnaalysis(ctx context.Context) (*model.Response, error) {
 	c.logger.Info("Getting IPO analysis")
 
-	// 模拟数据
-	projectPerformance := []model.ProjectPerformance{
-		{Project: "项目A", PriceChange: 20, AvgReturn: 15},
-		{Project: "项目B", PriceChange: -5, AvgReturn: -3},
-		{Project: "项目C", PriceChange: 30, AvgReturn: 25},
+	// 构建请求
+	req := &proto.GetIPOAnaalysisRequest{}
+
+	// 调用gRPC接口
+	resp, err := c.service.GetIPOAnaalysis(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get IPO analysis: %v", err)
+		return nil, err
 	}
 
-	influenceFactors := []model.InfluenceFactor{
-		{Factor: "市场环境", Correlation: 0.8},
-		{Factor: "公司基本面", Correlation: 0.9},
-		{Factor: "发行价格", Correlation: 0.7},
+	// 转换projectPerformance
+	projectPerformance := make([]model.ProjectPerformance, len(resp.Data.ProjectPerformance))
+	for i, item := range resp.Data.ProjectPerformance {
+		projectPerformance[i] = model.ProjectPerformance{
+			Project:     item.Project,
+			PriceChange: item.PriceChange,
+			AvgReturn:   item.AvgReturn,
+		}
 	}
 
-	competitorComparison := []model.CompetitorComparison{
-		{Competitor: "竞争对手A", SubscriptionUsers: 800, SubscriptionAmount: 6000000, Multiple: 8},
-		{Competitor: "竞争对手B", SubscriptionUsers: 1200, SubscriptionAmount: 9000000, Multiple: 11},
+	// 转换influenceFactors
+	influenceFactors := make([]model.InfluenceFactor, len(resp.Data.InfluenceFactors))
+	for i, item := range resp.Data.InfluenceFactors {
+		influenceFactors[i] = model.InfluenceFactor{
+			Factor:      item.Factor,
+			Correlation: item.Correlation,
+		}
 	}
 
+	// 转换competitorComparison
+	competitorComparison := make([]model.CompetitorComparison, len(resp.Data.CompetitorComparison))
+	for i, item := range resp.Data.CompetitorComparison {
+		competitorComparison[i] = model.CompetitorComparison{
+			Competitor:         item.Competitor,
+			SubscriptionUsers:  int(item.SubscriptionUsers),
+			SubscriptionAmount: int(item.SubscriptionAmount),
+			Multiple:           item.Multiple,
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.IPOAAnalysis{
-			ProjectPerformance:    projectPerformance,
-			InfluenceFactors:      influenceFactors,
-			CompetitorComparison:  competitorComparison,
+			ProjectPerformance:   projectPerformance,
+			InfluenceFactors:     influenceFactors,
+			CompetitorComparison: competitorComparison,
 		},
 	}, nil
 }
@@ -407,35 +636,58 @@ func (c *DashboardClient) GetIPOAnaalysis(ctx context.Context) (*model.Response,
 func (c *DashboardClient) GetFinanceCustomer(ctx context.Context) (*model.Response, error) {
 	c.logger.Info("Getting finance customer")
 
-	// 模拟数据
-	userDistribution := []model.UserDistribution{
-		{Type: "PI用户", Count: 200, Percentage: 40},
-		{Type: "普通用户", Count: 300, Percentage: 60},
+	// 构建请求
+	req := &proto.GetFinanceCustomerRequest{}
+
+	// 调用gRPC接口
+	resp, err := c.service.GetFinanceCustomer(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get finance customer: %v", err)
+		return nil, err
 	}
 
-	financingPurpose := []model.FinancingPurpose{
-		{Purpose: "股票交易", Percentage: 70},
-		{Purpose: "基金投资", Percentage: 20},
-		{Purpose: "其他", Percentage: 10},
+	// 转换userDistribution
+	userDistribution := make([]model.UserDistribution, len(resp.Data.UserDistribution))
+	for i, item := range resp.Data.UserDistribution {
+		userDistribution[i] = model.UserDistribution{
+			Type:       item.Type,
+			Count:      int(item.Count),
+			Percentage: item.Percentage,
+		}
 	}
 
-	riskAssessment := []model.RiskAssessment{
-		{Type: "PI用户", DefaultRate: 0.5, OverdueRate: 1},
-		{Type: "普通用户", DefaultRate: 2, OverdueRate: 3},
+	// 转换financingPurpose
+	financingPurpose := make([]model.FinancingPurpose, len(resp.Data.FinancingPurpose))
+	for i, item := range resp.Data.FinancingPurpose {
+		financingPurpose[i] = model.FinancingPurpose{
+			Purpose:    item.Purpose,
+			Percentage: item.Percentage,
+		}
 	}
 
+	// 转换riskAssessment
+	riskAssessment := make([]model.RiskAssessment, len(resp.Data.RiskAssessment))
+	for i, item := range resp.Data.RiskAssessment {
+		riskAssessment[i] = model.RiskAssessment{
+			Type:        item.Type,
+			DefaultRate: item.DefaultRate,
+			OverdueRate: item.OverdueRate,
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.FinanceCustomer{
-			TotalUsers:       500,
+			TotalUsers:       int(resp.Data.TotalUsers),
 			UserDistribution: userDistribution,
 			FinancingSize: model.FinancingSize{
-				AvgSize:    100000,
-				MedianSize: 80000,
-				P25Size:    50000,
-				P75Size:    150000,
-				MaxSize:    500000,
+				AvgSize:    resp.Data.FinancingSize.AvgSize,
+				MedianSize: resp.Data.FinancingSize.MedianSize,
+				P25Size:    resp.Data.FinancingSize.P25Size,
+				P75Size:    resp.Data.FinancingSize.P75Size,
+				MaxSize:    resp.Data.FinancingSize.MaxSize,
 			},
 			FinancingPurpose: financingPurpose,
 			RiskAssessment:   riskAssessment,
@@ -446,31 +698,54 @@ func (c *DashboardClient) GetFinanceCustomer(ctx context.Context) (*model.Respon
 func (c *DashboardClient) GetFinanceStock(ctx context.Context) (*model.Response, error) {
 	c.logger.Info("Getting finance stock")
 
-	// 模拟数据
-	hotStocks := []model.HotStock{
-		{Stock: "腾讯控股", FinancingBalance: 100000000, MarketCapRatio: 5},
-		{Stock: "阿里巴巴", FinancingBalance: 80000000, MarketCapRatio: 4},
-		{Stock: "美团", FinancingBalance: 60000000, MarketCapRatio: 3},
+	// 构建请求
+	req := &proto.GetFinanceStockRequest{}
+
+	// 调用gRPC接口
+	resp, err := c.service.GetFinanceStock(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get finance stock: %v", err)
+		return nil, err
 	}
 
-	financingTrend := []model.FinancingTrend{
-		{Date: "2023-03-01", BuyAmount: 5000000, SellAmount: 3000000},
-		{Date: "2023-03-02", BuyAmount: 6000000, SellAmount: 4000000},
-		{Date: "2023-03-03", BuyAmount: 7000000, SellAmount: 5000000},
+	// 转换hotStocks
+	hotStocks := make([]model.HotStock, len(resp.Data.HotStocks))
+	for i, item := range resp.Data.HotStocks {
+		hotStocks[i] = model.HotStock{
+			Stock:            item.Stock,
+			FinancingBalance: int(item.FinancingBalance),
+			MarketCapRatio:   item.MarketCapRatio,
+		}
 	}
 
-	marginRatio := []model.MarginRatio{
-		{Stock: "腾讯控股", Ratio: 2, PriceVolatility: 2},
-		{Stock: "阿里巴巴", Ratio: 1.8, PriceVolatility: 2.5},
+	// 转换financingTrend
+	financingTrend := make([]model.FinancingTrend, len(resp.Data.FinancingTrend))
+	for i, item := range resp.Data.FinancingTrend {
+		financingTrend[i] = model.FinancingTrend{
+			Date:       item.Date,
+			BuyAmount:  int(item.BuyAmount),
+			SellAmount: int(item.SellAmount),
+		}
 	}
 
+	// 转换marginRatio
+	marginRatio := make([]model.MarginRatio, len(resp.Data.MarginRatio))
+	for i, item := range resp.Data.MarginRatio {
+		marginRatio[i] = model.MarginRatio{
+			Stock:           item.Stock,
+			Ratio:           item.Ratio,
+			PriceVolatility: item.PriceVolatility,
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.FinanceStock{
-			HotStocks:       hotStocks,
-			FinancingTrend:  financingTrend,
-			MarginRatio:     marginRatio,
+			HotStocks:      hotStocks,
+			FinancingTrend: financingTrend,
+			MarginRatio:    marginRatio,
 		},
 	}, nil
 }
@@ -479,19 +754,43 @@ func (c *DashboardClient) GetFinanceStock(ctx context.Context) (*model.Response,
 func (c *DashboardClient) GetDrilldownDetail(ctx context.Context, dataType, id string, page, pageSize int) (*model.Response, error) {
 	c.logger.Info("Getting drilldown detail")
 
-	// 模拟数据
-	list := []model.DrilldownItem{
-		{ID: "1", CustomerId: "C001", Name: "张三", Age: 30, Region: "北京", Asset: 100000, TradeAmount: 50000},
-		{ID: "2", CustomerId: "C002", Name: "李四", Age: 35, Region: "上海", Asset: 150000, TradeAmount: 80000},
+	// 构建请求
+	req := &proto.GetDrilldownDetailRequest{
+		Type:     dataType,
+		Id:       id,
+		Page:     int32(page),
+		PageSize: int32(pageSize),
 	}
 
+	// 调用gRPC接口
+	resp, err := c.service.GetDrilldownDetail(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get drilldown detail: %v", err)
+		return nil, err
+	}
+
+	// 转换list
+	list := make([]model.DrilldownItem, len(resp.Data.List))
+	for i, item := range resp.Data.List {
+		list[i] = model.DrilldownItem{
+			ID:          item.Id,
+			CustomerId:  item.CustomerId,
+			Name:        item.Name,
+			Age:         int(item.Age),
+			Region:      item.Region,
+			Asset:       int(item.Asset),
+			TradeAmount: int(item.TradeAmount),
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.DrilldownDetail{
-			Total:    100,
-			Page:     page,
-			PageSize: pageSize,
+			Total:    int(resp.Data.Total),
+			Page:     int(resp.Data.Page),
+			PageSize: int(resp.Data.PageSize),
 			List:     list,
 		},
 	}, nil
@@ -500,19 +799,36 @@ func (c *DashboardClient) GetDrilldownDetail(ctx context.Context, dataType, id s
 func (c *DashboardClient) GetDrilldownTrend(ctx context.Context, dataType, id, period string) (*model.Response, error) {
 	c.logger.Info("Getting drilldown trend")
 
-	// 模拟数据
-	trend := []model.TrendItem{
-		{Date: "2023-01", Value: 2800},
-		{Date: "2023-02", Value: 2900},
-		{Date: "2023-03", Value: 3000},
+	// 构建请求
+	req := &proto.GetDrilldownTrendRequest{
+		Type:   dataType,
+		Id:     id,
+		Period: period,
 	}
 
+	// 调用gRPC接口
+	resp, err := c.service.GetDrilldownTrend(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get drilldown trend: %v", err)
+		return nil, err
+	}
+
+	// 转换trend
+	trend := make([]model.TrendItem, len(resp.Data.Trend))
+	for i, item := range resp.Data.Trend {
+		trend[i] = model.TrendItem{
+			Date:  item.Date,
+			Value: int(item.Value),
+		}
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.DrilldownTrend{
-			Type:  dataType,
-			Name:  "活跃用户数",
+			Type:  resp.Data.Type,
+			Name:  resp.Data.Name,
 			Trend: trend,
 		},
 	}, nil
@@ -522,16 +838,29 @@ func (c *DashboardClient) GetDrilldownTrend(ctx context.Context, dataType, id, p
 func (c *DashboardClient) Login(ctx context.Context, username, password string) (*model.Response, error) {
 	c.logger.Info("User login")
 
-	// 模拟数据
+	// 构建请求
+	req := &proto.LoginRequest{
+		Username: username,
+		Password: password,
+	}
+
+	// 调用gRPC接口
+	resp, err := c.service.Login(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to login: %v", err)
+		return nil, err
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.LoginResponse{
-			Token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+			Token: resp.Data.Token,
 			User: model.User{
-				ID:       "U001",
-				Username: "admin",
-				Role:     "admin",
+				ID:       resp.Data.User.Id,
+				Username: resp.Data.User.Username,
+				Role:     resp.Data.User.Role,
 			},
 		},
 	}, nil
@@ -540,15 +869,25 @@ func (c *DashboardClient) Login(ctx context.Context, username, password string) 
 func (c *DashboardClient) GetAuthInfo(ctx context.Context) (*model.Response, error) {
 	c.logger.Info("Getting auth info")
 
-	// 模拟数据
+	// 构建请求
+	req := &proto.GetAuthInfoRequest{}
+
+	// 调用gRPC接口
+	resp, err := c.service.GetAuthInfo(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to get auth info: %v", err)
+		return nil, err
+	}
+
+	// 转换为模型
 	return &model.Response{
-		Code:    200,
-		Message: "success",
+		Code:    int(resp.Code),
+		Message: resp.Message,
 		Data: model.User{
-			ID:          "U001",
-			Username:    "admin",
-			Role:        "admin",
-			Permissions: []string{"dashboard:view", "customer:view", "trade:view"},
+			ID:          resp.Data.Id,
+			Username:    resp.Data.Username,
+			Role:        resp.Data.Role,
+			Permissions: resp.Data.Permissions,
 		},
 	}, nil
 }

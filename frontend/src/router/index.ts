@@ -42,6 +42,18 @@ const routes = [
     name: 'Finance',
     component: () => import('../views/finance/index.vue'),
     meta: { title: '融资主题' }
+  },
+  {
+    path: '/drilldown',
+    name: 'Drilldown',
+    component: () => import('../views/drilldown/index.vue'),
+    meta: { title: '数据钻取' }
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/auth/index.vue'),
+    meta: { title: '登录' }
   }
 ]
 
