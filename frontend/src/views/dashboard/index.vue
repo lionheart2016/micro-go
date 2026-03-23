@@ -206,8 +206,18 @@ const loadData = async () => {
     console.log('业绩表现响应:', performanceRes)
     
     // 更新数据
-    coreIndicators.value = coreIndicatorsRes
-    performance.value = performanceRes
+    coreIndicators.value = {
+      registeredUsers: coreIndicatorsRes.data.registeredUsers,
+      开户人数: coreIndicatorsRes.data.accountCount,
+      activeUsers: coreIndicatorsRes.data.activeUsers,
+      depositUsers: coreIndicatorsRes.data.depositUsers,
+      depositAmount: coreIndicatorsRes.data.depositAmount,
+      stockTradeUsers: coreIndicatorsRes.data.stockTradeUsers,
+      stockTradeAmount: coreIndicatorsRes.data.stockTradeAmount,
+      fundTradeUsers: coreIndicatorsRes.data.fundTradeUsers,
+      fundTradeAmount: coreIndicatorsRes.data.fundTradeAmount
+    }
+    performance.value = performanceRes.data
   } catch (error) {
     console.error('Failed to load data:', error)
   } finally {

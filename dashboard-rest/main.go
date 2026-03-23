@@ -34,6 +34,7 @@ func main() {
 	log.Info("Server starting on %s", serverAddr)
 
 	if err := router.Run(serverAddr); err != nil {
-		log.Error("Failed to start server: %v", err)
+		log.Error("Failed to start server on %s: %v", serverAddr, err)
+		return
 	}
 }
