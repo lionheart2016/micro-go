@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package dashboard;
+
+option go_package = "dashboard-data/internal/grpc/proto";
+
+// 仪表盘服务
+service DashboardService {
+  // 获取核心指标
+  rpc GetCoreIndicators (GetCoreIndicatorsRequest) returns (GetCoreIndicatorsResponse) {}
+  // 获取业绩表现
+  rpc GetPerformance (GetPerformanceRequest) returns (GetPerformanceResponse) {}
+}
+
+// 请求和响应消息
+message GetCoreIndicatorsRequest {
+  string period = 1; // 统计周期
+}
+
+message GetCoreIndicatorsResponse {
+  int32 code = 1;
+  string message = 2;
+  CoreIndicators data = 3;
+}
+
+message GetPerformanceRequest {
+  string period = 1; // 统计周期
+}
+
+message GetPerformanceResponse {
+  int32 code = 1;
+  string message = 2;
+  Performance data = 3;
+}
+
+// 数据结构
+message CoreIndicators {
+  Indicator registered_users = 1;
+  Indicator account_count = 2;
+  Indicator active_users = 3;
+  Indicator deposit_users = 4;
+  Indicator deposit_amount = 5;
+  Indicator stock_trade_users = 6;
+  Indicator stock_trade_amount = 7;
+  Indicator fund_trade_users = 8;
+  Indicator fund_trade_amount = 9;
+}
+
+message Indicator {
+  int32 value = 1;
+  int32 change = 2;
+  double change_rate = 3;
+}
+
+message Performance {
+  int32 stock_revenue = 1;
+  int32 fund_revenue = 2;
+  repeated RevenueItem revenue_structure = 3;
+  repeated RevenueTrend revenue_trend = 4;
+  RevenueChange revenue_change = 5;
+  int32 deposit_net_growth = 6;
+  repeated DepositTrend deposit_trend = 7;
+  double deposit_withdrawal_ratio = 8;
+}
+
+message RevenueItem {
+  string name = 1;
+  int32 value = 2;
+}
+
+message RevenueTrend {
+  string month = 1;
+  int32 stock = 2;
+  int32 fund = 3;
+}
+
+message RevenueChange {
+  double yoy = 1;
+  double mom = 2;
+}
+
+message DepositTrend {
+  string month = 1;
+  int32 value = 2;
+}
