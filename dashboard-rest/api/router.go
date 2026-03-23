@@ -1,17 +1,17 @@
 package api
 
 import (
-	"net/http"
+	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(handler *DashboardHandler) http.Handler {
-	mux := http.NewServeMux()
+func SetupRouter(handler *DashboardHandler) *gin.Engine {
+	router := gin.Default()
 
 	// 核心指标相关路由
-	mux.HandleFunc("/api/core-indicators", handler.GetCoreIndicators)
+	router.GET("/api/core-indicators", handler.GetCoreIndicators)
 
 	// 业绩表现相关路由
-	mux.HandleFunc("/api/performance", handler.GetPerformance)
+	router.GET("/api/performance", handler.GetPerformance)
 
-	return mux
+	return router
 }

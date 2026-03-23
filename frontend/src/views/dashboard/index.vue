@@ -206,8 +206,8 @@ const loadData = async () => {
     console.log('业绩表现响应:', performanceRes)
     
     // 更新数据
-    coreIndicators.value = coreIndicatorsRes.data
-    performance.value = performanceRes.data
+    coreIndicators.value = coreIndicatorsRes
+    performance.value = performanceRes
   } catch (error) {
     console.error('Failed to load data:', error)
   } finally {

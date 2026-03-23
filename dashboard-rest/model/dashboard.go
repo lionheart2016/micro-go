@@ -3,7 +3,7 @@ package model
 // CoreIndicators 核心指标
 type CoreIndicators struct {
 	RegisteredUsers  Indicator `json:"registeredUsers"`
-	AccountCount     Indicator `json:"开户人数"`
+	AccountCount     Indicator `json:"accountCount"`
 	ActiveUsers      Indicator `json:"activeUsers"`
 	DepositUsers     Indicator `json:"depositUsers"`
 	DepositAmount    Indicator `json:"depositAmount"`

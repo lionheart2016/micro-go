@@ -6,7 +6,6 @@ import (
 	"dashboard-rest/pkg/config"
 	"dashboard-rest/pkg/logger"
 	"fmt"
-	"net/http"
 )
 
 func main() {
@@ -34,7 +33,7 @@ func main() {
 	serverAddr := fmt.Sprintf(":%d", cfg.ServerPort)
 	log.Info("Server starting on %s", serverAddr)
 
-	if err := http.ListenAndServe(serverAddr, router); err != nil {
+	if err := router.Run(serverAddr); err != nil {
 		log.Error("Failed to start server: %v", err)
 	}
 }

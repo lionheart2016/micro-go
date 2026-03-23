@@ -39,7 +39,7 @@
 
 **技术栈**：
 
-- Golang + Gin/Echo
+- Golang + Gin
 - Apifox 文档
 - Validator 校验
 - Redis 缓存
@@ -141,7 +141,7 @@
 ├── configs/             # 配置文件
 ├── scripts/             # 脚本
 └── Makefile             # 构建脚本
-````
+```
 
 #### 3.1.2 xxxx-bridge (桥接服务) 目录结构
 
@@ -186,7 +186,7 @@ clean:
 
 #### 3.1.3 xxxx-srv (业务服务) 目录结构
 
-```
+````
 ├── main.go              # 应用入口
 ├── internal/            # 内部包
 │   ├── api/             # API 层
@@ -224,7 +224,7 @@ test:
 # 清理
 clean:
 	rm -rf bin/
-```
+````
 
 #### 3.1.4 xxxx-data (数据服务) 目录结构
 

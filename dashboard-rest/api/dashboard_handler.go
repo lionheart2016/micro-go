@@ -3,7 +3,7 @@ package api
 import (
 	"dashboard-rest/grpc/client"
 	"dashboard-rest/pkg/logger"
-	"encoding/json"
+	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
@@ -19,40 +19,38 @@ func NewDashboardHandler(client *client.DashboardClient, logger *logger.Logger) 
 	}
 }
 
-func (h *DashboardHandler) GetCoreIndicators(w http.ResponseWriter, r *http.Request) {
+func (h *DashboardHandler) GetCoreIndicators(c *gin.Context) {
 	h.logger.Info("Getting core indicators")
 
-	period := r.URL.Query().Get("period")
+	period := c.Query("period")
 	if period == "" {
 		period = "7d"
 	}
 
-	response, err := h.client.GetCoreIndicators(r.Context(), period)
+	response, err := h.client.GetCoreIndicators(c.Request.Context(), period)
 	if err != nil {
 		h.logger.Error("Failed to get core indicators: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get core indicators"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	c.JSON(http.StatusOK, response)
 }
 
-func (h *DashboardHandler) GetPerformance(w http.ResponseWriter, r *http.Request) {
+func (h *DashboardHandler) GetPerformance(c *gin.Context) {
 	h.logger.Info("Getting performance")
 
-	period := r.URL.Query().Get("period")
+	period := c.Query("period")
 	if period == "" {
 		period = "7d"
 	}
 
-	response, err := h.client.GetPerformance(r.Context(), period)
+	response, err := h.client.GetPerformance(c.Request.Context(), period)
 	if err != nil {
 		h.logger.Error("Failed to get performance: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get performance"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	c.JSON(http.StatusOK, response)
 }
