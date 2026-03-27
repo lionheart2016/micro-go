@@ -1,8 +1,32 @@
 <template>
   <div class="dashboard">
     <div class="dashboard-header">
-      <h2>关键指标概览</h2>
-      <el-button type="primary" @click="loadData">刷新数据</el-button>
+      <div class="header-left">
+        <h2>关键指标概览</h2>
+        <p class="header-subtitle">实时监控港美股经纪业务核心数据</p>
+      </div>
+      <div class="header-right">
+        <el-button 
+          type="primary" 
+          @click="loadData" 
+          :loading="loading"
+          :icon="loading ? 'el-icon-loading' : 'el-icon-refresh'"
+          class="refresh-button"
+        >
+          {{ loading ? '加载中...' : '刷新数据' }}
+        </el-button>
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          @change="handleDateChange"
+          class="date-picker"
+        />
+      </div>
     </div>
     
     <!-- 核心指标卡片 -->
@@ -13,6 +37,7 @@
           :value="coreIndicators.registeredUsers.value" 
           :change="coreIndicators.registeredUsers.change" 
           :changeRate="coreIndicators.registeredUsers.changeRate" 
+          :loading="loading"
         />
       </div>
       <div class="kpi-item">
@@ -21,6 +46,7 @@
           :value="coreIndicators.开户人数.value" 
           :change="coreIndicators.开户人数.change" 
           :changeRate="coreIndicators.开户人数.changeRate" 
+          :loading="loading"
         />
       </div>
       <div class="kpi-item">
@@ -29,6 +55,7 @@
           :value="coreIndicators.activeUsers.value" 
           :change="coreIndicators.activeUsers.change" 
           :changeRate="coreIndicators.activeUsers.changeRate" 
+          :loading="loading"
         />
       </div>
       <div class="kpi-item">
@@ -37,6 +64,7 @@
           :value="coreIndicators.depositUsers.value" 
           :change="coreIndicators.depositUsers.change" 
           :changeRate="coreIndicators.depositUsers.changeRate" 
+          :loading="loading"
         />
       </div>
       <div class="kpi-item">
@@ -45,6 +73,7 @@
           :value="coreIndicators.depositAmount.value" 
           :change="coreIndicators.depositAmount.change" 
           :changeRate="coreIndicators.depositAmount.changeRate" 
+          :loading="loading"
         />
       </div>
       <div class="kpi-item">
@@ -53,6 +82,7 @@
           :value="coreIndicators.stockTradeUsers.value" 
           :change="coreIndicators.stockTradeUsers.change" 
           :changeRate="coreIndicators.stockTradeUsers.changeRate" 
+          :loading="loading"
         />
       </div>
       <div class="kpi-item">
@@ -61,6 +91,7 @@
           :value="coreIndicators.stockTradeAmount.value" 
           :change="coreIndicators.stockTradeAmount.change" 
           :changeRate="coreIndicators.stockTradeAmount.changeRate" 
+          :loading="loading"
         />
       </div>
       <div class="kpi-item">
@@ -69,19 +100,22 @@
           :value="coreIndicators.fundTradeUsers.value" 
           :change="coreIndicators.fundTradeUsers.change" 
           :changeRate="coreIndicators.fundTradeUsers.changeRate" 
+          :loading="loading"
         />
       </div>
     </div>
 
     <!-- 业绩表现 -->
     <div class="performance-section">
+      <h3 class="section-title">业绩表现分析</h3>
       <div class="performance-charts">
         <div class="chart-item">
           <BaseCard title="收入结构">
             <PieChart 
               title="收入结构" 
               :data="performance.revenueStructure" 
-              height="300px" 
+              height="350px" 
+              :loading="loading"
             />
           </BaseCard>
         </div>
@@ -94,11 +128,12 @@
                 { name: '股票收入', data: performance.revenueTrend.map(item => item.stock) },
                 { name: '基金收入', data: performance.revenueTrend.map(item => item.fund) }
               ]" 
-              height="300px" 
+              height="350px" 
+              :loading="loading"
             />
           </BaseCard>
         </div>
-        <div class="chart-item">
+        <div class="chart-item chart-item-full">
           <BaseCard title="入金趋势">
             <LineChart 
               title="入金趋势" 
@@ -106,7 +141,8 @@
               :series="[
                 { name: '入金金额', data: performance.depositTrend.map(item => item.value) }
               ]" 
-              height="300px" 
+              height="350px" 
+              :loading="loading"
             />
           </BaseCard>
         </div>
@@ -190,6 +226,12 @@ const performance = ref({
 // 加载状态
 const loading = ref(false)
 
+// 日期范围
+const dateRange = ref<[string, string]>([
+  new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
+  new Date().toISOString().split('T')[0]
+])
+
 // 加载数据
 const loadData = async () => {
   console.log('开始加载数据')
@@ -226,6 +268,15 @@ const loadData = async () => {
   }
 }
 
+// 日期变化处理
+const handleDateChange = (val: [string, string] | null) => {
+  if (val) {
+    dateRange.value = val
+    // 这里可以根据日期范围重新加载数据
+    loadData()
+  }
+}
+
 onMounted(() => {
   console.log('组件挂载，开始加载数据')
   loadData()
@@ -234,53 +285,170 @@ onMounted(() => {
 
 <style scoped>
 .dashboard {
-  padding: 20px 0;
+  padding: 0;
 }
 
 .dashboard-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-light);
 }
 
-.dashboard-header h2 {
+.header-left h2 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.header-subtitle {
   margin: 0;
-  color: #303133;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.refresh-button {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+}
+
+.refresh-button:hover {
+  background-color: var(--primary-light) !important;
+  border-color: var(--primary-light) !important;
+  transform: translateY(-1px) !important;
+}
+
+.date-picker {
+  border-radius: 8px !important;
+  border-color: var(--border-light) !important;
+  font-size: 14px !important;
 }
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
 }
 
 .kpi-item {
-  height: 160px;
+  height: 180px;
+  transition: all 0.3s ease;
+}
+
+.kpi-item:hover {
+  transform: translateY(-2px);
 }
 
 .performance-section {
-  margin-top: 30px;
+  margin-top: 40px;
+}
+
+.section-title {
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 24px 0;
+  letter-spacing: 0.5px;
 }
 
 .performance-charts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 20px;
+  gap: 24px;
 }
 
 .chart-item {
   width: 100%;
+  transition: all 0.3s ease;
 }
 
-@media (max-width: 768px) {
+.chart-item:hover {
+  transform: translateY(-2px);
+}
+
+.chart-item-full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1200px) {
   .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
   }
   
   .performance-charts {
     grid-template-columns: 1fr;
+  }
+  
+  .chart-item-full {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .kpi-item {
+    height: 160px;
+  }
+  
+  .header-left h2 {
+    font-size: 20px;
+  }
+  
+  .section-title {
+    font-size: 18px;
+  }
+  
+  .performance-charts {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-right {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .date-picker {
+    width: 100%;
   }
 }
 </style>

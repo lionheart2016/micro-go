@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  dashboard-data:
+    build:
+      context: ./dashboard-data
+    ports:
+      - "50051:50051"
+    networks:
+      - dashboard-network
+
+  dashboard-rest:
+    build:
+      context: ./dashboard-rest
+    ports:
+      - "8082:8080"
+    environment:
+      - GRPC_HOST=dashboard-data
+      - GRPC_PORT=50051
+      - SERVER_PORT=8080
+    depends_on:
+      - dashboard-data
+    networks:
+      - dashboard-network
+
+networks:
+  dashboard-network:
+    driver: bridge
