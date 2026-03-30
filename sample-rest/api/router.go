@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
-	"sample-rest/pkg/logger"
+	"micro-go/pkg/logger"
 )
 
 // SetupRouter 设置路由

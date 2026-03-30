@@ -23,6 +23,16 @@ services:
     networks:
       - dashboard-network
 
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - dashboard-rest
+    networks:
+      - dashboard-network
+
 networks:
   dashboard-network:
     driver: bridge

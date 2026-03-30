@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"sample-rest/model"
-	"sample-rest/pkg/logger"
+	"micro-go/model"
+	"micro-go/pkg/logger"
 )
 
 // UserHandler 用户 API 处理器
@@ -159,7 +159,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Router /users/{id} [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
+	_, err := strconv.Atoi(idStr)
 	if err != nil {
 		h.logger.Error("Invalid user ID", map[string]interface{}{"error": err.Error()})
 		c.JSON(http.StatusBadRequest, model.ErrorResponse(http.StatusBadRequest, "Invalid user ID"))

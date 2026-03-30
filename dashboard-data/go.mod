@@ -1,6 +1,6 @@
 module dashboard-data
 
-go 1.20
+go 1.25.7
 
 require (
 	google.golang.org/grpc v1.56.2

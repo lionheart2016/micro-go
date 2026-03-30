@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 # 测试配置
-BASE_URL="http://localhost:8082"
+BASE_URL="http://localhost:8080"
 LOG_FILE="test_results.log"
 
 # 测试结果统计

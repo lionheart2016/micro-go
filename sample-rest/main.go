@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"sample-rest/api"
-	"sample-rest/pkg/config"
-	"sample-rest/pkg/logger"
+	"micro-go/api"
+	"micro-go/pkg/config"
+	"micro-go/pkg/logger"
 )
 
 func main() {
