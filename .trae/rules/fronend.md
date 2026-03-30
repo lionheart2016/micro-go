@@ -7,3 +7,4 @@ rest 服务，禁止使用 mock 数据，data 层可以使用 mock数据
 严格 按 ARCHITECTURE.md文档要求编写代码
 
 docker 构建时，禁止采用多阶段构建。所有服务在本地编译，再打包到 docker 镜像
+后服务编译时，应有必要的 log 输出，方便调试。

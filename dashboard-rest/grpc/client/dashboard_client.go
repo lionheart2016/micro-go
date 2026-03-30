@@ -8,22 +8,25 @@ import (
 
 	"dashboard-rest/grpc/proto"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type DashboardClient struct {
-	logger  *logger.Logger
 	conn    *grpc.ClientConn
 	service proto.DashboardServiceClient
 }
 
-func New(grpcHost string, grpcPort int, logger *logger.Logger) (*DashboardClient, error) {
+func New(grpcHost string, grpcPort int) (*DashboardClient, error) {
 	addr := fmt.Sprintf("%s:%d", grpcHost, grpcPort)
 	// 连接到gRPC服务器
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logger.Error("Failed to connect to gRPC server: %v", err)
+		logger.Error("Failed to connect to gRPC server",
+			zap.Error(err),
+			zap.String("address", addr),
+		)
 		return nil, err
 	}
 
@@ -31,14 +34,15 @@ func New(grpcHost string, grpcPort int, logger *logger.Logger) (*DashboardClient
 	service := proto.NewDashboardServiceClient(conn)
 
 	return &DashboardClient{
-		logger:  logger,
 		conn:    conn,
 		service: service,
 	}, nil
 }
 
 func (c *DashboardClient) GetCoreIndicators(ctx context.Context, period string) (*model.Response, error) {
-	c.logger.Info("Getting core indicators")
+	logger.Info("Getting core indicators",
+		zap.String("period", period),
+	)
 
 	// 构建请求
 	req := &proto.GetCoreIndicatorsRequest{
@@ -48,9 +52,16 @@ func (c *DashboardClient) GetCoreIndicators(ctx context.Context, period string) 
 	// 调用gRPC接口
 	resp, err := c.service.GetCoreIndicators(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get core indicators: %v", err)
+		logger.Error("Failed to get core indicators",
+			zap.Error(err),
+			zap.String("period", period),
+		)
 		return nil, err
 	}
+	
+	logger.Info("Core indicators retrieved successfully",
+		zap.String("period", period),
+	)
 
 	// 转换为模型
 	return &model.Response{
@@ -107,7 +118,9 @@ func (c *DashboardClient) GetCoreIndicators(ctx context.Context, period string) 
 }
 
 func (c *DashboardClient) GetPerformance(ctx context.Context, period string) (*model.Response, error) {
-	c.logger.Info("Getting performance")
+	logger.Info("Getting performance",
+		zap.String("period", period),
+	)
 
 	// 构建请求
 	req := &proto.GetPerformanceRequest{
@@ -117,9 +130,16 @@ func (c *DashboardClient) GetPerformance(ctx context.Context, period string) (*m
 	// 调用gRPC接口
 	resp, err := c.service.GetPerformance(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get performance: %v", err)
+		logger.Error("Failed to get performance",
+			zap.Error(err),
+			zap.String("period", period),
+		)
 		return nil, err
 	}
+
+	logger.Info("Performance retrieved successfully",
+		zap.String("period", period),
+	)
 
 	// 转换revenueStructure
 	revenueStructure := make([]model.RevenueItem, len(resp.Data.RevenueStructure))
@@ -171,7 +191,9 @@ func (c *DashboardClient) GetPerformance(ctx context.Context, period string) (*m
 
 // 客户分析相关方法
 func (c *DashboardClient) GetCustomerDistribution(ctx context.Context, dimension string) (*model.Response, error) {
-	c.logger.Info("Getting customer distribution")
+	logger.Info("Getting customer distribution",
+		zap.String("dimension", dimension),
+	)
 
 	// 构建请求
 	req := &proto.GetCustomerDistributionRequest{
@@ -181,7 +203,10 @@ func (c *DashboardClient) GetCustomerDistribution(ctx context.Context, dimension
 	// 调用gRPC接口
 	resp, err := c.service.GetCustomerDistribution(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get customer distribution: %v", err)
+		logger.Error("Failed to get customer distribution",
+			zap.Error(err),
+			zap.String("dimension", dimension),
+		)
 		return nil, err
 	}
 
@@ -209,7 +234,9 @@ func (c *DashboardClient) GetCustomerDistribution(ctx context.Context, dimension
 }
 
 func (c *DashboardClient) GetCustomerBehavior(ctx context.Context, behaviorType string) (*model.Response, error) {
-	c.logger.Info("Getting customer behavior")
+	logger.Info("Getting customer behavior",
+		zap.String("behaviorType", behaviorType),
+	)
 
 	// 构建请求
 	req := &proto.GetCustomerBehaviorRequest{
@@ -219,7 +246,10 @@ func (c *DashboardClient) GetCustomerBehavior(ctx context.Context, behaviorType 
 	// 调用gRPC接口
 	resp, err := c.service.GetCustomerBehavior(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get customer behavior: %v", err)
+		logger.Error("Failed to get customer behavior",
+			zap.Error(err),
+			zap.String("behaviorType", behaviorType),
+		)
 		return nil, err
 	}
 
@@ -248,7 +278,9 @@ func (c *DashboardClient) GetCustomerBehavior(ctx context.Context, behaviorType 
 
 // 交易分析相关方法
 func (c *DashboardClient) GetStockTrade(ctx context.Context, tradeType string) (*model.Response, error) {
-	c.logger.Info("Getting stock trade")
+	logger.Info("Getting stock trade",
+		zap.String("tradeType", tradeType),
+	)
 
 	// 构建请求
 	req := &proto.GetStockTradeRequest{
@@ -258,7 +290,10 @@ func (c *DashboardClient) GetStockTrade(ctx context.Context, tradeType string) (
 	// 调用gRPC接口
 	resp, err := c.service.GetStockTrade(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get stock trade: %v", err)
+		logger.Error("Failed to get stock trade",
+			zap.Error(err),
+			zap.String("tradeType", tradeType),
+		)
 		return nil, err
 	}
 
@@ -293,7 +328,9 @@ func (c *DashboardClient) GetStockTrade(ctx context.Context, tradeType string) (
 }
 
 func (c *DashboardClient) GetFundTrade(ctx context.Context, tradeType string) (*model.Response, error) {
-	c.logger.Info("Getting fund trade")
+	logger.Info("Getting fund trade",
+		zap.String("tradeType", tradeType),
+	)
 
 	// 构建请求
 	req := &proto.GetFundTradeRequest{
@@ -303,7 +340,10 @@ func (c *DashboardClient) GetFundTrade(ctx context.Context, tradeType string) (*
 	// 调用gRPC接口
 	resp, err := c.service.GetFundTrade(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get fund trade: %v", err)
+		logger.Error("Failed to get fund trade",
+			zap.Error(err),
+			zap.String("tradeType", tradeType),
+		)
 		return nil, err
 	}
 
@@ -330,7 +370,7 @@ func (c *DashboardClient) GetFundTrade(ctx context.Context, tradeType string) (*
 
 // PI用户分析相关方法
 func (c *DashboardClient) GetPIBasic(ctx context.Context) (*model.Response, error) {
-	c.logger.Info("Getting PI basic information")
+	logger.Info("Getting PI basic information")
 
 	// 构建请求
 	req := &proto.GetPIBasicRequest{}
@@ -338,7 +378,9 @@ func (c *DashboardClient) GetPIBasic(ctx context.Context) (*model.Response, erro
 	// 调用gRPC接口
 	resp, err := c.service.GetPIBasic(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get PI basic: %v", err)
+		logger.Error("Failed to get PI basic",
+			zap.Error(err),
+		)
 		return nil, err
 	}
 
@@ -379,7 +421,9 @@ func (c *DashboardClient) GetPIBasic(ctx context.Context) (*model.Response, erro
 }
 
 func (c *DashboardClient) GetPIBehavior(ctx context.Context, behaviorType string) (*model.Response, error) {
-	c.logger.Info("Getting PI behavior")
+	logger.Info("Getting PI behavior",
+		zap.String("behaviorType", behaviorType),
+	)
 
 	// 构建请求
 	req := &proto.GetPIBehaviorRequest{
@@ -389,7 +433,10 @@ func (c *DashboardClient) GetPIBehavior(ctx context.Context, behaviorType string
 	// 调用gRPC接口
 	resp, err := c.service.GetPIBehavior(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get PI behavior: %v", err)
+		logger.Error("Failed to get PI behavior",
+			zap.Error(err),
+			zap.String("behaviorType", behaviorType),
+		)
 		return nil, err
 	}
 
@@ -419,7 +466,7 @@ func (c *DashboardClient) GetPIBehavior(ctx context.Context, behaviorType string
 
 // 开户主题相关方法
 func (c *DashboardClient) GetAccountProcess(ctx context.Context) (*model.Response, error) {
-	c.logger.Info("Getting account process")
+	logger.Info("Getting account process")
 
 	// 构建请求
 	req := &proto.GetAccountProcessRequest{}
@@ -427,7 +474,9 @@ func (c *DashboardClient) GetAccountProcess(ctx context.Context) (*model.Respons
 	// 调用gRPC接口
 	resp, err := c.service.GetAccountProcess(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get account process: %v", err)
+		logger.Error("Failed to get account process",
+			zap.Error(err),
+		)
 		return nil, err
 	}
 
@@ -466,7 +515,7 @@ func (c *DashboardClient) GetAccountProcess(ctx context.Context) (*model.Respons
 }
 
 func (c *DashboardClient) GetAccountException(ctx context.Context) (*model.Response, error) {
-	c.logger.Info("Getting account exception")
+	logger.Info("Getting account exception")
 
 	// 构建请求
 	req := &proto.GetAccountExceptionRequest{}
@@ -474,7 +523,9 @@ func (c *DashboardClient) GetAccountException(ctx context.Context) (*model.Respo
 	// 调用gRPC接口
 	resp, err := c.service.GetAccountException(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get account exception: %v", err)
+		logger.Error("Failed to get account exception",
+			zap.Error(err),
+		)
 		return nil, err
 	}
 
@@ -522,7 +573,7 @@ func (c *DashboardClient) GetAccountException(ctx context.Context) (*model.Respo
 
 // IPO主题相关方法
 func (c *DashboardClient) GetIPOSubscription(ctx context.Context) (*model.Response, error) {
-	c.logger.Info("Getting IPO subscription")
+	logger.Info("Getting IPO subscription")
 
 	// 构建请求
 	req := &proto.GetIPOSubscriptionRequest{}
@@ -530,7 +581,9 @@ func (c *DashboardClient) GetIPOSubscription(ctx context.Context) (*model.Respon
 	// 调用gRPC接口
 	resp, err := c.service.GetIPOSubscription(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get IPO subscription: %v", err)
+		logger.Error("Failed to get IPO subscription",
+			zap.Error(err),
+		)
 		return nil, err
 	}
 
@@ -578,7 +631,7 @@ func (c *DashboardClient) GetIPOSubscription(ctx context.Context) (*model.Respon
 }
 
 func (c *DashboardClient) GetIPOAnaalysis(ctx context.Context) (*model.Response, error) {
-	c.logger.Info("Getting IPO analysis")
+	logger.Info("Getting IPO analysis")
 
 	// 构建请求
 	req := &proto.GetIPOAnaalysisRequest{}
@@ -586,7 +639,9 @@ func (c *DashboardClient) GetIPOAnaalysis(ctx context.Context) (*model.Response,
 	// 调用gRPC接口
 	resp, err := c.service.GetIPOAnaalysis(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get IPO analysis: %v", err)
+		logger.Error("Failed to get IPO analysis",
+			zap.Error(err),
+		)
 		return nil, err
 	}
 
@@ -634,7 +689,7 @@ func (c *DashboardClient) GetIPOAnaalysis(ctx context.Context) (*model.Response,
 
 // 融资主题相关方法
 func (c *DashboardClient) GetFinanceCustomer(ctx context.Context) (*model.Response, error) {
-	c.logger.Info("Getting finance customer")
+	logger.Info("Getting finance customer")
 
 	// 构建请求
 	req := &proto.GetFinanceCustomerRequest{}
@@ -642,7 +697,9 @@ func (c *DashboardClient) GetFinanceCustomer(ctx context.Context) (*model.Respon
 	// 调用gRPC接口
 	resp, err := c.service.GetFinanceCustomer(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get finance customer: %v", err)
+		logger.Error("Failed to get finance customer",
+			zap.Error(err),
+		)
 		return nil, err
 	}
 
@@ -696,7 +753,7 @@ func (c *DashboardClient) GetFinanceCustomer(ctx context.Context) (*model.Respon
 }
 
 func (c *DashboardClient) GetFinanceStock(ctx context.Context) (*model.Response, error) {
-	c.logger.Info("Getting finance stock")
+	logger.Info("Getting finance stock")
 
 	// 构建请求
 	req := &proto.GetFinanceStockRequest{}
@@ -704,7 +761,9 @@ func (c *DashboardClient) GetFinanceStock(ctx context.Context) (*model.Response,
 	// 调用gRPC接口
 	resp, err := c.service.GetFinanceStock(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get finance stock: %v", err)
+		logger.Error("Failed to get finance stock",
+			zap.Error(err),
+		)
 		return nil, err
 	}
 
@@ -752,7 +811,12 @@ func (c *DashboardClient) GetFinanceStock(ctx context.Context) (*model.Response,
 
 // 数据钻取相关方法
 func (c *DashboardClient) GetDrilldownDetail(ctx context.Context, dataType, id string, page, pageSize int) (*model.Response, error) {
-	c.logger.Info("Getting drilldown detail")
+	logger.Info("Getting drilldown detail",
+		zap.String("dataType", dataType),
+		zap.String("id", id),
+		zap.Int("page", page),
+		zap.Int("pageSize", pageSize),
+	)
 
 	// 构建请求
 	req := &proto.GetDrilldownDetailRequest{
@@ -765,7 +829,13 @@ func (c *DashboardClient) GetDrilldownDetail(ctx context.Context, dataType, id s
 	// 调用gRPC接口
 	resp, err := c.service.GetDrilldownDetail(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get drilldown detail: %v", err)
+		logger.Error("Failed to get drilldown detail",
+			zap.Error(err),
+			zap.String("dataType", dataType),
+			zap.String("id", id),
+			zap.Int("page", page),
+			zap.Int("pageSize", pageSize),
+		)
 		return nil, err
 	}
 
@@ -797,7 +867,11 @@ func (c *DashboardClient) GetDrilldownDetail(ctx context.Context, dataType, id s
 }
 
 func (c *DashboardClient) GetDrilldownTrend(ctx context.Context, dataType, id, period string) (*model.Response, error) {
-	c.logger.Info("Getting drilldown trend")
+	logger.Info("Getting drilldown trend",
+		zap.String("dataType", dataType),
+		zap.String("id", id),
+		zap.String("period", period),
+	)
 
 	// 构建请求
 	req := &proto.GetDrilldownTrendRequest{
@@ -809,7 +883,12 @@ func (c *DashboardClient) GetDrilldownTrend(ctx context.Context, dataType, id, p
 	// 调用gRPC接口
 	resp, err := c.service.GetDrilldownTrend(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get drilldown trend: %v", err)
+		logger.Error("Failed to get drilldown trend",
+			zap.Error(err),
+			zap.String("dataType", dataType),
+			zap.String("id", id),
+			zap.String("period", period),
+		)
 		return nil, err
 	}
 
@@ -836,7 +915,9 @@ func (c *DashboardClient) GetDrilldownTrend(ctx context.Context, dataType, id, p
 
 // 认证相关方法
 func (c *DashboardClient) Login(ctx context.Context, username, password string) (*model.Response, error) {
-	c.logger.Info("User login")
+	logger.Info("User login",
+		zap.String("username", username),
+	)
 
 	// 构建请求
 	req := &proto.LoginRequest{
@@ -847,7 +928,10 @@ func (c *DashboardClient) Login(ctx context.Context, username, password string) 
 	// 调用gRPC接口
 	resp, err := c.service.Login(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to login: %v", err)
+		logger.Error("Failed to login",
+			zap.Error(err),
+			zap.String("username", username),
+		)
 		return nil, err
 	}
 
@@ -867,7 +951,7 @@ func (c *DashboardClient) Login(ctx context.Context, username, password string) 
 }
 
 func (c *DashboardClient) GetAuthInfo(ctx context.Context) (*model.Response, error) {
-	c.logger.Info("Getting auth info")
+	logger.Info("Getting auth info")
 
 	// 构建请求
 	req := &proto.GetAuthInfoRequest{}
@@ -875,7 +959,9 @@ func (c *DashboardClient) GetAuthInfo(ctx context.Context) (*model.Response, err
 	// 调用gRPC接口
 	resp, err := c.service.GetAuthInfo(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get auth info: %v", err)
+		logger.Error("Failed to get auth info",
+			zap.Error(err),
+		)
 		return nil, err
 	}
 

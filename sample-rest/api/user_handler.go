@@ -8,18 +8,17 @@ import (
 
 	"micro-go/model"
 	"micro-go/pkg/logger"
+
+	"go.uber.org/zap"
 )
 
 // UserHandler 用户 API 处理器
 type UserHandler struct {
-	logger   *logger.Logger
 }
 
 // NewUserHandler 创建新的用户 API 处理器
-func NewUserHandler(logger *logger.Logger) *UserHandler {
-	return &UserHandler{
-		logger:   logger,
-	}
+func NewUserHandler() *UserHandler {
+	return &UserHandler{}
 }
 
 // CreateUser 创建用户
@@ -36,10 +35,18 @@ func NewUserHandler(logger *logger.Logger) *UserHandler {
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var req model.UserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("Invalid request body", map[string]interface{}{"error": err.Error()})
+		logger.Error("Invalid request body",
+			zap.Error(err),
+		)
 		c.JSON(http.StatusBadRequest, model.ErrorResponse(http.StatusBadRequest, "Invalid request body"))
 		return
 	}
+	
+	logger.Info("User created successfully",
+		zap.String("name", req.Name),
+		zap.String("email", req.Email),
+		zap.Int("age", req.Age),
+	)
 
 	user := &model.User{
 		ID:    1,
@@ -66,10 +73,17 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		h.logger.Error("Invalid user ID", map[string]interface{}{"error": err.Error()})
+		logger.Error("Invalid user ID",
+			zap.Error(err),
+			zap.String("id", idStr),
+		)
 		c.JSON(http.StatusBadRequest, model.ErrorResponse(http.StatusBadRequest, "Invalid user ID"))
 		return
 	}
+	
+	logger.Info("User retrieved successfully",
+		zap.Int("id", id),
+	)
 
 	user := &model.User{
 		ID:    id,
@@ -90,6 +104,8 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 // @Failure 500 {object} model.Response
 // @Router /users [get]
 func (h *UserHandler) GetAllUsers(c *gin.Context) {
+	logger.Info("Getting all users")
+	
 	users := []*model.User{
 		{
 			ID:    1,
@@ -104,6 +120,10 @@ func (h *UserHandler) GetAllUsers(c *gin.Context) {
 			Age:   25,
 		},
 	}
+	
+	logger.Info("Users retrieved successfully",
+		zap.Int("count", len(users)),
+	)
 
 	c.JSON(http.StatusOK, model.SuccessResponse(users))
 }
@@ -125,17 +145,29 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		h.logger.Error("Invalid user ID", map[string]interface{}{"error": err.Error()})
+		logger.Error("Invalid user ID",
+			zap.Error(err),
+			zap.String("id", idStr),
+		)
 		c.JSON(http.StatusBadRequest, model.ErrorResponse(http.StatusBadRequest, "Invalid user ID"))
 		return
 	}
 
 	var req model.UserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("Invalid request body", map[string]interface{}{"error": err.Error()})
+		logger.Error("Invalid request body",
+			zap.Error(err),
+		)
 		c.JSON(http.StatusBadRequest, model.ErrorResponse(http.StatusBadRequest, "Invalid request body"))
 		return
 	}
+	
+	logger.Info("User updated successfully",
+		zap.Int("id", id),
+		zap.String("name", req.Name),
+		zap.String("email", req.Email),
+		zap.Int("age", req.Age),
+	)
 
 	user := &model.User{
 		ID:    id,
@@ -159,12 +191,19 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Router /users/{id} [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	idStr := c.Param("id")
-	_, err := strconv.Atoi(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		h.logger.Error("Invalid user ID", map[string]interface{}{"error": err.Error()})
+		logger.Error("Invalid user ID",
+			zap.Error(err),
+			zap.String("id", idStr),
+		)
 		c.JSON(http.StatusBadRequest, model.ErrorResponse(http.StatusBadRequest, "Invalid user ID"))
 		return
 	}
+	
+	logger.Info("User deleted successfully",
+		zap.Int("id", id),
+	)
 
 	c.JSON(http.StatusOK, model.SuccessResponse(nil))
 }

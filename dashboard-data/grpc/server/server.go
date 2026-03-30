@@ -3,9 +3,10 @@ package server
 import (
 	"context"
 	"dashboard-data/grpc/proto"
+	"dashboard-data/pkg/logger"
 	"dashboard-data/repository"
-	"log"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -25,7 +26,7 @@ func NewDashboardService() *DashboardService {
 // RegisterDataService 注册数据服务
 func RegisterDataService(s *grpc.Server) {
 	proto.RegisterDashboardServiceServer(s, NewDashboardService())
-	log.Println("Dashboard Data Service registered")
+	logger.Info("Dashboard Data Service registered")
 }
 
 // GetCoreIndicators 获取核心指标
@@ -33,12 +34,19 @@ func (s *DashboardService) GetCoreIndicators(ctx context.Context, req *proto.Get
 	// 调用仓库获取数据
 	coreIndicators, err := s.dashboardRepo.GetCoreIndicators(req.Period)
 	if err != nil {
-		log.Printf("Failed to get core indicators: %v", err)
+		logger.Error("Failed to get core indicators",
+			zap.Error(err),
+			zap.String("period", req.Period),
+		)
 		return &proto.GetCoreIndicatorsResponse{
 			Code:    500,
 			Message: "Failed to get core indicators",
 		}, err
 	}
+
+	logger.Info("Core indicators retrieved successfully",
+		zap.String("period", req.Period),
+	)
 
 	// 转换为 proto 响应
 	return &proto.GetCoreIndicatorsResponse{
@@ -99,12 +107,19 @@ func (s *DashboardService) GetPerformance(ctx context.Context, req *proto.GetPer
 	// 调用仓库获取数据
 	performance, err := s.dashboardRepo.GetPerformance(req.Period)
 	if err != nil {
-		log.Printf("Failed to get performance: %v", err)
+		logger.Error("Failed to get performance",
+			zap.Error(err),
+			zap.String("period", req.Period),
+		)
 		return &proto.GetPerformanceResponse{
 			Code:    500,
 			Message: "Failed to get performance",
 		}, err
 	}
+
+	logger.Info("Performance retrieved successfully",
+		zap.String("period", req.Period),
+	)
 
 	// 转换为 proto 响应
 	revenueStructure := make([]*proto.RevenueItem, len(performance.RevenueStructure))
@@ -156,12 +171,19 @@ func (s *DashboardService) GetCustomerDistribution(ctx context.Context, req *pro
 	// 调用仓库获取数据
 	distribution, err := s.dashboardRepo.GetCustomerDistribution(req.Dimension)
 	if err != nil {
-		log.Printf("Failed to get customer distribution: %v", err)
+		logger.Error("Failed to get customer distribution",
+			zap.Error(err),
+			zap.String("dimension", req.Dimension),
+		)
 		return &proto.GetCustomerDistributionResponse{
 			Code:    500,
 			Message: "Failed to get customer distribution",
 		}, err
 	}
+
+	logger.Info("Customer distribution retrieved successfully",
+		zap.String("dimension", req.Dimension),
+	)
 
 	// 转换为 proto 响应
 	distributionItems := make([]*proto.CustomerDistributionItem, len(distribution.Distribution))
@@ -190,12 +212,19 @@ func (s *DashboardService) GetCustomerBehavior(ctx context.Context, req *proto.G
 	// 调用仓库获取数据
 	behavior, err := s.dashboardRepo.GetCustomerBehavior(req.Type)
 	if err != nil {
-		log.Printf("Failed to get customer behavior: %v", err)
+		logger.Error("Failed to get customer behavior",
+			zap.Error(err),
+			zap.String("type", req.Type),
+		)
 		return &proto.GetCustomerBehaviorResponse{
 			Code:    500,
 			Message: "Failed to get customer behavior",
 		}, err
 	}
+
+	logger.Info("Customer behavior retrieved successfully",
+		zap.String("type", req.Type),
+	)
 
 	// 转换为 proto 响应
 	trendItems := make([]*proto.CustomerBehaviorTrend, len(behavior.Trend))
@@ -224,12 +253,19 @@ func (s *DashboardService) GetStockTrade(ctx context.Context, req *proto.GetStoc
 	// 调用仓库获取数据
 	stockTrade, err := s.dashboardRepo.GetStockTrade(req.Type)
 	if err != nil {
-		log.Printf("Failed to get stock trade: %v", err)
+		logger.Error("Failed to get stock trade",
+			zap.Error(err),
+			zap.String("type", req.Type),
+		)
 		return &proto.GetStockTradeResponse{
 			Code:    500,
 			Message: "Failed to get stock trade",
 		}, err
 	}
+
+	logger.Info("Stock trade retrieved successfully",
+		zap.String("type", req.Type),
+	)
 
 	// 转换为 proto 响应
 	executionTimes := make([]*proto.ExecutionTime, len(stockTrade.ExecutionTime))
@@ -264,12 +300,19 @@ func (s *DashboardService) GetFundTrade(ctx context.Context, req *proto.GetFundT
 	// 调用仓库获取数据
 	fundTrade, err := s.dashboardRepo.GetFundTrade(req.Type)
 	if err != nil {
-		log.Printf("Failed to get fund trade: %v", err)
+		logger.Error("Failed to get fund trade",
+			zap.Error(err),
+			zap.String("type", req.Type),
+		)
 		return &proto.GetFundTradeResponse{
 			Code:    500,
 			Message: "Failed to get fund trade",
 		}, err
 	}
+
+	logger.Info("Fund trade retrieved successfully",
+		zap.String("type", req.Type),
+	)
 
 	// 转换为 proto 响应
 	salesByType := make([]*proto.SalesByType, len(fundTrade.SalesByType))
@@ -296,12 +339,16 @@ func (s *DashboardService) GetPIBasic(ctx context.Context, req *proto.GetPIBasic
 	// 调用仓库获取数据
 	piBasic, err := s.dashboardRepo.GetPIBasic()
 	if err != nil {
-		log.Printf("Failed to get PI basic information: %v", err)
+		logger.Error("Failed to get PI basic information",
+			zap.Error(err),
+		)
 		return &proto.GetPIBasicResponse{
 			Code:    500,
 			Message: "Failed to get PI basic information",
 		}, err
 	}
+
+	logger.Info("PI basic information retrieved successfully")
 
 	// 转换为 proto 响应
 	assetDistribution := make([]*proto.AssetDistribution, len(piBasic.AssetDistribution))
@@ -342,12 +389,19 @@ func (s *DashboardService) GetPIBehavior(ctx context.Context, req *proto.GetPIBe
 	// 调用仓库获取数据
 	piBehavior, err := s.dashboardRepo.GetPIBehavior(req.Type)
 	if err != nil {
-		log.Printf("Failed to get PI behavior: %v", err)
+		logger.Error("Failed to get PI behavior",
+			zap.Error(err),
+			zap.String("type", req.Type),
+		)
 		return &proto.GetPIBehaviorResponse{
 			Code:    500,
 			Message: "Failed to get PI behavior",
 		}, err
 	}
+
+	logger.Info("PI behavior retrieved successfully",
+		zap.String("type", req.Type),
+	)
 
 	// 转换为 proto 响应
 	moneyFlow := make([]*proto.MoneyFlow, len(piBehavior.MoneyFlow))
@@ -377,12 +431,16 @@ func (s *DashboardService) GetAccountProcess(ctx context.Context, req *proto.Get
 	// 调用仓库获取数据
 	accountProcess, err := s.dashboardRepo.GetAccountProcess()
 	if err != nil {
-		log.Printf("Failed to get account process: %v", err)
+		logger.Error("Failed to get account process",
+			zap.Error(err),
+		)
 		return &proto.GetAccountProcessResponse{
 			Code:    500,
 			Message: "Failed to get account process",
 		}, err
 	}
+
+	logger.Info("Account process retrieved successfully")
 
 	// 转换为 proto 响应
 	funnel := make([]*proto.FunnelStage, len(accountProcess.Funnel))
@@ -421,12 +479,16 @@ func (s *DashboardService) GetAccountException(ctx context.Context, req *proto.G
 	// 调用仓库获取数据
 	accountException, err := s.dashboardRepo.GetAccountException()
 	if err != nil {
-		log.Printf("Failed to get account exception: %v", err)
+		logger.Error("Failed to get account exception",
+			zap.Error(err),
+		)
 		return &proto.GetAccountExceptionResponse{
 			Code:    500,
 			Message: "Failed to get account exception",
 		}, err
 	}
+
+	logger.Info("Account exception retrieved successfully")
 
 	// 转换为 proto 响应
 	exceptionTypes := make([]*proto.ExceptionType, len(accountException.ExceptionTypes))
@@ -472,12 +534,16 @@ func (s *DashboardService) GetIPOSubscription(ctx context.Context, req *proto.Ge
 	// 调用仓库获取数据
 	ipoSubscription, err := s.dashboardRepo.GetIPOSubscription()
 	if err != nil {
-		log.Printf("Failed to get IPO subscription: %v", err)
+		logger.Error("Failed to get IPO subscription",
+			zap.Error(err),
+		)
 		return &proto.GetIPOSubscriptionResponse{
 			Code:    500,
 			Message: "Failed to get IPO subscription",
 		}, err
 	}
+
+	logger.Info("IPO subscription retrieved successfully")
 
 	// 转换为 proto 响应
 	userDistribution := make([]*proto.UserDistribution, len(ipoSubscription.UserDistribution))
@@ -524,12 +590,16 @@ func (s *DashboardService) GetIPOAnaalysis(ctx context.Context, req *proto.GetIP
 	// 调用仓库获取数据
 	ipoAnalysis, err := s.dashboardRepo.GetIPOAnaalysis()
 	if err != nil {
-		log.Printf("Failed to get IPO analysis: %v", err)
+		logger.Error("Failed to get IPO analysis",
+			zap.Error(err),
+		)
 		return &proto.GetIPOAnaalysisResponse{
 			Code:    500,
 			Message: "Failed to get IPO analysis",
 		}, err
 	}
+
+	logger.Info("IPO analysis retrieved successfully")
 
 	// 转换为 proto 响应
 	projectPerformance := make([]*proto.ProjectPerformance, len(ipoAnalysis.ProjectPerformance))
@@ -580,12 +650,16 @@ func (s *DashboardService) GetFinanceCustomer(ctx context.Context, req *proto.Ge
 	// 调用仓库获取数据
 	financeCustomer, err := s.dashboardRepo.GetFinanceCustomer()
 	if err != nil {
-		log.Printf("Failed to get finance customer: %v", err)
+		logger.Error("Failed to get finance customer",
+			zap.Error(err),
+		)
 		return &proto.GetFinanceCustomerResponse{
 			Code:    500,
 			Message: "Failed to get finance customer",
 		}, err
 	}
+
+	logger.Info("Finance customer retrieved successfully")
 
 	// 转换为 proto 响应
 	userDistribution := make([]*proto.UserDistribution, len(financeCustomer.UserDistribution))
@@ -638,12 +712,16 @@ func (s *DashboardService) GetFinanceStock(ctx context.Context, req *proto.GetFi
 	// 调用仓库获取数据
 	financeStock, err := s.dashboardRepo.GetFinanceStock()
 	if err != nil {
-		log.Printf("Failed to get finance stock: %v", err)
+		logger.Error("Failed to get finance stock",
+			zap.Error(err),
+		)
 		return &proto.GetFinanceStockResponse{
 			Code:    500,
 			Message: "Failed to get finance stock",
 		}, err
 	}
+
+	logger.Info("Finance stock retrieved successfully")
 
 	// 转换为 proto 响应
 	hotStocks := make([]*proto.HotStock, len(financeStock.HotStocks))
@@ -689,12 +767,25 @@ func (s *DashboardService) GetDrilldownDetail(ctx context.Context, req *proto.Ge
 	// 调用仓库获取数据
 	drilldownDetail, err := s.dashboardRepo.GetDrilldownDetail(req.Type, req.Id, int(req.Page), int(req.PageSize))
 	if err != nil {
-		log.Printf("Failed to get drilldown detail: %v", err)
+		logger.Error("Failed to get drilldown detail",
+			zap.Error(err),
+			zap.String("type", req.Type),
+			zap.String("id", req.Id),
+			zap.Int32("page", req.Page),
+			zap.Int32("page_size", req.PageSize),
+		)
 		return &proto.GetDrilldownDetailResponse{
 			Code:    500,
 			Message: "Failed to get drilldown detail",
 		}, err
 	}
+
+	logger.Info("Drilldown detail retrieved successfully",
+		zap.String("type", req.Type),
+		zap.String("id", req.Id),
+		zap.Int32("page", req.Page),
+		zap.Int32("page_size", req.PageSize),
+	)
 
 	// 转换为 proto 响应
 	list := make([]*proto.DrilldownItem, len(drilldownDetail.List))
@@ -727,12 +818,23 @@ func (s *DashboardService) GetDrilldownTrend(ctx context.Context, req *proto.Get
 	// 调用仓库获取数据
 	drilldownTrend, err := s.dashboardRepo.GetDrilldownTrend(req.Type, req.Id, req.Period)
 	if err != nil {
-		log.Printf("Failed to get drilldown trend: %v", err)
+		logger.Error("Failed to get drilldown trend",
+			zap.Error(err),
+			zap.String("type", req.Type),
+			zap.String("id", req.Id),
+			zap.String("period", req.Period),
+		)
 		return &proto.GetDrilldownTrendResponse{
 			Code:    500,
 			Message: "Failed to get drilldown trend",
 		}, err
 	}
+
+	logger.Info("Drilldown trend retrieved successfully",
+		zap.String("type", req.Type),
+		zap.String("id", req.Id),
+		zap.String("period", req.Period),
+	)
 
 	// 转换为 proto 响应
 	trend := make([]*proto.TrendItem, len(drilldownTrend.Trend))
@@ -759,12 +861,20 @@ func (s *DashboardService) Login(ctx context.Context, req *proto.LoginRequest) (
 	// 调用仓库获取数据
 	loginResponse, err := s.dashboardRepo.Login(req.Username, req.Password)
 	if err != nil {
-		log.Printf("Failed to login: %v", err)
+		logger.Error("Failed to login",
+			zap.Error(err),
+			zap.String("username", req.Username),
+		)
 		return &proto.LoginResponse{
 			Code:    500,
 			Message: "Failed to login",
 		}, err
 	}
+
+	logger.Info("Login successful",
+		zap.String("username", req.Username),
+		zap.String("user_id", loginResponse.User.ID),
+	)
 
 	// 转换为 proto 响应
 	return &proto.LoginResponse{
@@ -786,12 +896,19 @@ func (s *DashboardService) GetAuthInfo(ctx context.Context, req *proto.GetAuthIn
 	// 调用仓库获取数据
 	user, err := s.dashboardRepo.GetAuthInfo()
 	if err != nil {
-		log.Printf("Failed to get auth info: %v", err)
+		logger.Error("Failed to get auth info",
+			zap.Error(err),
+		)
 		return &proto.GetAuthInfoResponse{
 			Code:    500,
 			Message: "Failed to get auth info",
 		}, err
 	}
+
+	logger.Info("Auth info retrieved successfully",
+		zap.String("user_id", user.ID),
+		zap.String("username", user.Username),
+	)
 
 	// 转换为 proto 响应
 	return &proto.GetAuthInfoResponse{

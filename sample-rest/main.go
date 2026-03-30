@@ -9,31 +9,43 @@ import (
 	"micro-go/api"
 	"micro-go/pkg/config"
 	"micro-go/pkg/logger"
+
+	"go.uber.org/zap"
 )
 
 func main() {
 	// 加载配置
 	cfg, err := config.LoadConfig()
 	if err != nil {
+		// 这里使用标准库 fmt 是因为日志组件还未初始化
 		fmt.Printf("Failed to load config: %v\n", err)
 		os.Exit(1)
 	}
 
 	// 初始化日志
-	log := logger.New()
-	log.Info("Starting server", map[string]interface{}{"host": cfg.Server.Host, "port": cfg.Server.Port})
+	logger.InitLogger("sample-rest")
+	defer logger.Sync()
+	logger.Info("Starting server",
+		zap.String("host", cfg.Server.Host),
+		zap.Int("port", cfg.Server.Port),
+	)
 
 	// 初始化 API 层和路由
-	router := api.SetupRouter(log)
+	router := api.SetupRouter()
 
 	// 启动服务器
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
-	log.Info("Server started", map[string]interface{}{"address": serverAddr})
+	logger.Info("Server started",
+		zap.String("address", serverAddr),
+	)
 
 	// 优雅关闭
 	go func() {
 		if err := router.Run(serverAddr); err != nil {
-			log.Fatal("Failed to start server", map[string]interface{}{"error": err.Error()})
+			logger.Fatal("Failed to start server",
+				zap.Error(err),
+				zap.String("address", serverAddr),
+			)
 		}
 	}()
 
@@ -42,5 +54,5 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Info("Shutting down server", nil)
+	logger.Info("Shutting down server")
 }

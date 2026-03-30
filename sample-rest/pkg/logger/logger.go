@@ -1,91 +1,113 @@
 package logger
 
 import (
-	"encoding/json"
-	"log"
 	"os"
-	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-// Level 日志级别
-type Level string
-
-const (
-	Debug Level = "DEBUG"
-	Info  Level = "INFO"
-	Warn  Level = "WARN"
-	Error Level = "ERROR"
-	Fatal Level = "FATAL"
+var (
+	// Logger 全局日志实例
+	Logger *zap.Logger
+	// SugarLogger 全局 Sugar 日志实例
+	SugarLogger *zap.SugaredLogger
 )
 
-// Logger 日志结构
-type Logger struct {
-	debugLogger *log.Logger
-	infoLogger  *log.Logger
-	warnLogger  *log.Logger
-	errorLogger *log.Logger
-	fatalLogger *log.Logger
-}
-
-// LogEntry 日志条目
-type LogEntry struct {
-	Level   Level   `json:"level"`
-	Time    string  `json:"time"`
-	Message string  `json:"message"`
-	Fields  map[string]interface{} `json:"fields,omitempty"`
-}
-
-// New 创建新的日志记录器
-func New() *Logger {
-	return &Logger{
-		debugLogger: log.New(os.Stdout, "", 0),
-		infoLogger:  log.New(os.Stdout, "", 0),
-		warnLogger:  log.New(os.Stdout, "", 0),
-		errorLogger: log.New(os.Stderr, "", 0),
-		fatalLogger: log.New(os.Stderr, "", 0),
+// InitLogger 初始化日志组件
+func InitLogger(serviceName string) {
+	// 配置编码器
+	encoderConfig := zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		FunctionKey:    zapcore.OmitKey,
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
+
+	// 创建核心
+	core := zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderConfig),
+		zapcore.AddSync(os.Stdout),
+		zapcore.InfoLevel,
+	)
+
+	// 创建日志实例
+	Logger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
+	Logger = Logger.With(zap.String("service", serviceName))
+
+	// 创建 Sugar 日志实例
+	SugarLogger = Logger.Sugar()
 }
 
 // Debug 记录调试级别日志
-func (l *Logger) Debug(message string, fields map[string]interface{}) {
-	l.log(Debug, message, fields, l.debugLogger)
+func Debug(msg string, fields ...zapcore.Field) {
+	Logger.Debug(msg, fields...)
+}
+
+// Debugf 使用 Sugar 记录调试级别日志（printf 风格）
+func Debugf(format string, args ...interface{}) {
+	SugarLogger.Debugf(format, args...)
 }
 
 // Info 记录信息级别日志
-func (l *Logger) Info(message string, fields map[string]interface{}) {
-	l.log(Info, message, fields, l.infoLogger)
+func Info(msg string, fields ...zapcore.Field) {
+	Logger.Info(msg, fields...)
+}
+
+// Infof 使用 Sugar 记录信息级别日志（printf 风格）
+func Infof(format string, args ...interface{}) {
+	SugarLogger.Infof(format, args...)
 }
 
 // Warn 记录警告级别日志
-func (l *Logger) Warn(message string, fields map[string]interface{}) {
-	l.log(Warn, message, fields, l.warnLogger)
+func Warn(msg string, fields ...zapcore.Field) {
+	Logger.Warn(msg, fields...)
+}
+
+// Warnf 使用 Sugar 记录警告级别日志（printf 风格）
+func Warnf(format string, args ...interface{}) {
+	SugarLogger.Warnf(format, args...)
 }
 
 // Error 记录错误级别日志
-func (l *Logger) Error(message string, fields map[string]interface{}) {
-	l.log(Error, message, fields, l.errorLogger)
+func Error(msg string, fields ...zapcore.Field) {
+	Logger.Error(msg, fields...)
 }
 
-// Fatal 记录致命级别日志并退出程序
-func (l *Logger) Fatal(message string, fields map[string]interface{}) {
-	l.log(Fatal, message, fields, l.fatalLogger)
-	os.Exit(1)
+// Errorf 使用 Sugar 记录错误级别日志（printf 风格）
+func Errorf(format string, args ...interface{}) {
+	SugarLogger.Errorf(format, args...)
 }
 
-// log 记录日志
-func (l *Logger) log(level Level, message string, fields map[string]interface{}, logger *log.Logger) {
-	entry := LogEntry{
-		Level:   level,
-		Time:    time.Now().Format(time.RFC3339),
-		Message: message,
-		Fields:  fields,
-	}
+// Fatal 记录致命级别日志
+func Fatal(msg string, fields ...zapcore.Field) {
+	Logger.Fatal(msg, fields...)
+}
 
-	entryJSON, err := json.Marshal(entry)
-	if err != nil {
-		logger.Println("Failed to marshal log entry:", err)
-		return
-	}
+// Fatalf 使用 Sugar 记录致命级别日志（printf 风格）
+func Fatalf(format string, args ...interface{}) {
+	SugarLogger.Fatalf(format, args...)
+}
 
-	logger.Println(string(entryJSON))
+// WithRequestID 添加请求 ID 到日志字段
+func WithRequestID(requestID string) *zap.Logger {
+	return Logger.With(zap.String("request_id", requestID))
+}
+
+// WithFields 添加自定义字段到日志
+func WithFields(fields ...zapcore.Field) *zap.Logger {
+	return Logger.With(fields...)
+}
+
+// Sync 刷新日志缓冲区
+func Sync() error {
+	return Logger.Sync()
 }
