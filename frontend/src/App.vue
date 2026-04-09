@@ -31,6 +31,9 @@
           <el-menu-item index="/finance">
             <span>融资主题</span>
           </el-menu-item>
+          <el-menu-item index="/xaua">
+            <span>XAUa 黄金代币</span>
+          </el-menu-item>
         </el-menu>
       </aside>
       <main class="app-content">

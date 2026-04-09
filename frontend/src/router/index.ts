@@ -44,6 +44,12 @@ const routes = [
     meta: { title: '融资主题' }
   },
   {
+    path: '/xaua',
+    name: 'XAUa',
+    component: () => import('../views/xaua/index.vue'),
+    meta: { title: 'XAUa 黄金代币' }
+  },
+  {
     path: '/drilldown',
     name: 'Drilldown',
     component: () => import('../views/drilldown/index.vue'),
